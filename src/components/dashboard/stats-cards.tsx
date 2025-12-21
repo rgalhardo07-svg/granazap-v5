@@ -108,7 +108,7 @@ export function StatsCards() {
     }
   };
 
-  const statsCards: StatCard[] = [
+  const mainStatsCards: StatCard[] = [
     {
       title: t('dashboard.stats.balance'),
       value: formatCurrency(stats.balance),
@@ -136,14 +136,6 @@ export function StatsCards() {
       count: `${stats.expensesCount} ${t('dashboard.stats.transactions')}`,
     },
     {
-      title: t('dashboard.stats.savings'),
-      value: `${stats.savingsRate.toFixed(1)}%`,
-      change: "+100%",
-      changeType: "positive",
-      icon: PiggyBank,
-      iconColor: "text-[#F59E0B]",
-    },
-    {
       title: `${t('dashboard.stats.toReceive')} (${getPeriodLabel()})`,
       value: formatCurrency(payableReceivable.receivable),
       change: "+100%",
@@ -163,9 +155,20 @@ export function StatsCards() {
     },
   ];
 
+  const savingsCard: StatCard = {
+    title: t('dashboard.stats.savings'),
+    value: `${stats.savingsRate.toFixed(1)}%`,
+    change: "+100%",
+    changeType: "positive",
+    icon: PiggyBank,
+    iconColor: "text-[#F59E0B]",
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
-      {statsCards.map((stat, index) => (
+    <div className="space-y-3 md:space-y-4">
+      {/* Main Stats Cards - 5 cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
+        {mainStatsCards.map((stat, index) => (
         <div
           key={index}
           className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6 hover:border-white/10 transition-colors"
@@ -189,24 +192,52 @@ export function StatsCards() {
           <p className="text-xs md:text-sm text-zinc-400 mb-2 line-clamp-2">{stat.title}</p>
 
           {/* Value */}
-          <p className="text-xl md:text-2xl font-bold font-mono mb-1">{stat.value}</p>
+          <p className="text-lg md:text-xl xl:text-2xl font-bold font-mono mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{stat.value}</p>
 
           {/* Count */}
           {stat.count && (
             <p className="text-[10px] md:text-xs text-zinc-500">{stat.count}</p>
           )}
 
-          {/* Progress bar for savings rate */}
-          {stat.title === t('dashboard.stats.savings') && (
-            <div className="mt-2 md:mt-3 h-1.5 md:h-2 bg-white/5 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-full"
-                style={{ width: stat.value }}
-              />
-            </div>
-          )}
         </div>
       ))}
+      </div>
+
+      {/* Savings Card - Full width horizontal banner */}
+      <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6 hover:border-white/10 transition-colors">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          {/* Left side - Icon, Title, Value */}
+          <div className="flex items-center gap-4">
+            <div className={cn("p-3 rounded-lg bg-white/5", savingsCard.iconColor)}>
+              <savingsCard.icon className="w-5 h-5 md:w-6 md:h-6" />
+            </div>
+            <div>
+              <p className="text-xs md:text-sm text-zinc-400 mb-1">{savingsCard.title}</p>
+              <p className="text-2xl md:text-3xl font-bold font-mono">{savingsCard.value}</p>
+            </div>
+          </div>
+
+          {/* Right side - Progress bar */}
+          <div className="flex-1 sm:max-w-md w-full">
+            <div className="flex items-center justify-end mb-2">
+              <span
+                className={cn(
+                  "text-xs md:text-sm font-medium",
+                  savingsCard.changeType === "positive" ? "text-[#22C55E]" : "text-[#EF4444]"
+                )}
+              >
+                {savingsCard.change}
+              </span>
+            </div>
+            <div className="h-3 md:h-4 bg-white/5 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-full transition-all duration-500"
+                style={{ width: savingsCard.value }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
