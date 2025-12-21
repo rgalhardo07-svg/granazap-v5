@@ -177,15 +177,15 @@ export function ChartsSection() {
         <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6">{t('dashboard.charts.expensesByCategory')}</h3>
         
         {/* Donut Chart */}
-        <div className="flex-1 relative h-[180px] md:h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="flex-1 relative" style={{ minHeight: '200px', height: '200px' }}>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie
                 data={expensesByCategory}
                 cx="50%"
                 cy="50%"
-                innerRadius={50}
-                outerRadius={70}
+                innerRadius={60}
+                outerRadius={80}
                 paddingAngle={5}
                 dataKey="value"
                 stroke="none"
