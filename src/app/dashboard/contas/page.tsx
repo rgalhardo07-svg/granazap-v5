@@ -53,77 +53,77 @@ export default function ContasPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Wallet className="w-8 h-8 text-blue-500" />
+          <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <Wallet className="w-6 h-6 md:w-8 md:h-8 text-blue-500" />
             {t('accounts.title')}
           </h1>
-          <p className="text-zinc-400">{t('accounts.description')}</p>
+          <p className="text-xs md:text-sm text-zinc-400">{t('accounts.description')}</p>
         </div>
 
         <div className="flex items-center gap-2 bg-[#111827] p-1 rounded-lg border border-white/10">
           <button
             onClick={() => changeFilter('pessoal')}
             className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+              "px-3 md:px-4 py-2 min-h-[44px] rounded-md text-xs md:text-sm font-medium transition-all flex items-center gap-2",
               accountFilter === 'pessoal' 
                 ? "bg-blue-600 text-white shadow-lg" 
                 : "text-zinc-400 hover:text-white hover:bg-white/5"
             )}
           >
             <User className="w-4 h-4" />
-            {t('sidebar.personal')}
+            <span className="hidden sm:inline">{t('sidebar.personal')}</span>
           </button>
           <button
             onClick={() => changeFilter('pj')}
             className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+              "px-3 md:px-4 py-2 min-h-[44px] rounded-md text-xs md:text-sm font-medium transition-all flex items-center gap-2",
               accountFilter === 'pj' 
                 ? "bg-purple-600 text-white shadow-lg" 
                 : "text-zinc-400 hover:text-white hover:bg-white/5"
             )}
           >
             <Building2 className="w-4 h-4" />
-            {t('sidebar.pj')}
+            <span className="hidden sm:inline">{t('sidebar.pj')}</span>
           </button>
         </div>
       </div>
 
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-[#111827] border border-white/10 rounded-xl p-5 relative overflow-hidden group">
-          <div className="absolute right-0 top-0 w-32 h-32 bg-blue-500/10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
-          <div className="flex items-center justify-between mb-4 relative">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+        <div className="bg-[#111827] border border-white/10 rounded-xl p-4 md:p-5 relative overflow-hidden group">
+          <div className="absolute right-0 top-0 w-24 h-24 md:w-32 md:h-32 bg-blue-500/10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div className="flex items-center justify-between mb-3 md:mb-4 relative">
             <div className="p-2 bg-blue-500/10 rounded-lg">
-              <Wallet className="w-5 h-5 text-blue-500" />
+              <Wallet className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
             </div>
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('accounts.totalBalance')}</span>
+            <span className="text-[10px] md:text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('accounts.totalBalance')}</span>
           </div>
           <div className="relative">
-            <span className="text-3xl font-bold text-white block">
+            <span className="text-2xl md:text-3xl font-bold text-white block">
               {formatCurrency(totalBalance)}
             </span>
-            <p className="text-sm text-zinc-500 mt-1">
+            <p className="text-xs md:text-sm text-zinc-500 mt-1">
               {t('accounts.sumAllAccounts')}
             </p>
           </div>
         </div>
 
-        <div className="bg-[#111827] border border-white/10 rounded-xl p-5 relative overflow-hidden group">
-            <div className="absolute right-0 top-0 w-32 h-32 bg-green-500/10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
-          <div className="flex items-center justify-between mb-4 relative">
+        <div className="bg-[#111827] border border-white/10 rounded-xl p-4 md:p-5 relative overflow-hidden group">
+            <div className="absolute right-0 top-0 w-24 h-24 md:w-32 md:h-32 bg-green-500/10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+          <div className="flex items-center justify-between mb-3 md:mb-4 relative">
             <div className="p-2 bg-green-500/10 rounded-lg">
-              <Landmark className="w-5 h-5 text-green-500" />
+              <Landmark className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
             </div>
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('accounts.activeAccounts')}</span>
+            <span className="text-[10px] md:text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('accounts.activeAccounts')}</span>
           </div>
           <div className="relative">
-            <span className="text-3xl font-bold text-white block">
+            <span className="text-2xl md:text-3xl font-bold text-white block">
               {accounts.length}
             </span>
-            <p className="text-sm text-zinc-500 mt-1">
+            <p className="text-xs md:text-sm text-zinc-500 mt-1">
               {t('accounts.institutionsRegistered')}
             </p>
           </div>
