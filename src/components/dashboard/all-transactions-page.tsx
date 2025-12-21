@@ -135,14 +135,14 @@ export function AllTransactionsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">{t('sidebar.transactions')}</h1>
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            <h1 className="text-xl md:text-2xl font-bold text-white">{t('sidebar.transactions')}</h1>
             <span className={cn(
-              "px-3 py-1 rounded-full text-xs font-semibold",
+              "px-2 md:px-3 py-1 rounded-full text-xs font-semibold",
               accountFilter === 'pessoal'
                 ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                 : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
@@ -150,44 +150,44 @@ export function AllTransactionsPage() {
               {accountFilter === 'pessoal' ? `👤 ${t('sidebar.personal')}` : `🏢 ${t('sidebar.pj')}`}
             </span>
           </div>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="text-zinc-400 text-xs md:text-sm mt-1">
             {t('transactions.manageIncome')} & {t('transactions.manageExpenses')}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#111827] text-zinc-300 rounded-lg hover:bg-white/5 transition-colors border border-white/5 text-sm font-medium">
+        <div className="flex items-center gap-2 md:gap-3">
+          <button className="flex items-center gap-2 px-3 md:px-4 py-2 min-h-[44px] bg-[#111827] text-zinc-300 rounded-lg hover:bg-white/5 transition-colors border border-white/5 text-xs md:text-sm font-medium">
             <Download className="w-4 h-4" />
-            <span>{t('common.export')}</span>
+            <span className="hidden sm:inline">{t('common.export')}</span>
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors text-sm font-medium"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors text-xs md:text-sm font-medium"
           >
             <Plus className="w-4 h-4" />
-            <span>{t('header.new')} {t('sidebar.transactions')}</span>
+            <span className="hidden sm:inline">{t('header.new')}</span>
           </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-6">
-          <p className="text-sm text-zinc-400 mb-2">{t('transactions.income')}</p>
-          <p className="text-2xl font-bold font-mono text-primary">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6">
+          <p className="text-xs md:text-sm text-zinc-400 mb-2">{t('transactions.income')}</p>
+          <p className="text-xl md:text-2xl font-bold font-mono text-primary">
             {formatCurrency(totalIncome)}
           </p>
         </div>
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-6">
-          <p className="text-sm text-zinc-400 mb-2">{t('transactions.expenses')}</p>
-          <p className="text-2xl font-bold font-mono text-red-500">
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6">
+          <p className="text-xs md:text-sm text-zinc-400 mb-2">{t('transactions.expenses')}</p>
+          <p className="text-xl md:text-2xl font-bold font-mono text-red-500">
             {formatCurrency(totalExpense)}
           </p>
         </div>
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-6">
-          <p className="text-sm text-zinc-400 mb-2">{t('dashboard.stats.balance')}</p>
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6 sm:col-span-2 lg:col-span-1">
+          <p className="text-xs md:text-sm text-zinc-400 mb-2">{t('dashboard.stats.balance')}</p>
           <p className={cn(
-            "text-2xl font-bold font-mono",
+            "text-xl md:text-2xl font-bold font-mono",
             balance >= 0 ? "text-primary" : "text-red-500"
           )}>
             {formatCurrency(Math.abs(balance))}
