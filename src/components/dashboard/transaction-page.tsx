@@ -160,14 +160,14 @@ export function TransactionPage({ type, title }: TransactionPageProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">{pageTitle}</h1>
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            <h1 className="text-xl md:text-2xl font-bold text-white">{pageTitle}</h1>
             <span className={cn(
-              "px-3 py-1 rounded-full text-xs font-semibold",
+              "px-2 md:px-3 py-1 rounded-full text-xs font-semibold",
               accountFilter === 'pessoal'
                 ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                 : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
@@ -175,35 +175,36 @@ export function TransactionPage({ type, title }: TransactionPageProps) {
               {accountFilter === 'pessoal' ? `👤 ${t('sidebar.personal')}` : `🏢 ${t('sidebar.pj')}`}
             </span>
           </div>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="text-zinc-400 text-xs md:text-sm mt-1">
             {pageDesc}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#111827] text-zinc-300 rounded-lg hover:bg-white/5 transition-colors border border-white/5 text-sm font-medium">
+        <div className="flex items-center gap-2 md:gap-3">
+          <button className="flex items-center gap-2 px-3 md:px-4 py-2 min-h-[44px] bg-[#111827] text-zinc-300 rounded-lg hover:bg-white/5 transition-colors border border-white/5 text-xs md:text-sm font-medium">
             <Download className="w-4 h-4" />
-            <span>{t('common.export')}</span>
+            <span className="hidden sm:inline">{t('common.export')}</span>
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium",
+              "flex items-center gap-2 px-3 md:px-4 py-2 min-h-[44px] text-white rounded-lg transition-colors text-xs md:text-sm font-medium",
               accentColor
             )}
           >
             <Plus className="w-4 h-4" />
-            <span>{newButtonText}</span>
+            <span className="hidden sm:inline">{newButtonText}</span>
+            <span className="sm:hidden">{type === 'receita' ? t('header.new') : t('header.new')}</span>
           </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-6">
-          <p className="text-sm text-zinc-400 mb-2">{t('transactions.totalMonth')}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6">
+          <p className="text-xs md:text-sm text-zinc-400 mb-2">{t('transactions.totalMonth')}</p>
           <p className={cn(
-            "text-2xl font-bold font-mono",
+            "text-xl md:text-2xl font-bold font-mono",
             type === 'receita' ? "text-[#22C55E]" : "text-[#EF4444]"
           )}>
             {formatCurrency(totalValue)}
