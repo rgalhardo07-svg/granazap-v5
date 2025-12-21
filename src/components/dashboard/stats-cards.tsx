@@ -164,20 +164,20 @@ export function StatsCards() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
       {statsCards.map((stat, index) => (
         <div
           key={index}
-          className="bg-[#111827] border border-white/5 rounded-xl p-6 hover:border-white/10 transition-colors"
+          className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6 hover:border-white/10 transition-colors"
         >
           {/* Icon & Change */}
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex items-start justify-between mb-4 md:mb-6">
             <div className={cn("p-2 rounded-lg bg-white/5", stat.iconColor)}>
-              <stat.icon className="w-5 h-5" />
+              <stat.icon className="w-4 h-4 md:w-5 md:h-5" />
             </div>
             <span
               className={cn(
-                "text-sm font-medium",
+                "text-xs md:text-sm font-medium",
                 stat.changeType === "positive" ? "text-[#22C55E]" : "text-[#EF4444]"
               )}
             >
@@ -186,19 +186,19 @@ export function StatsCards() {
           </div>
 
           {/* Title */}
-          <p className="text-sm text-zinc-400 mb-3">{stat.title}</p>
+          <p className="text-xs md:text-sm text-zinc-400 mb-2 md:mb-3 line-clamp-2">{stat.title}</p>
 
           {/* Value */}
-          <p className="text-2xl font-bold font-mono mb-2">{stat.value}</p>
+          <p className="text-xl md:text-2xl font-bold font-mono mb-1 md:mb-2">{stat.value}</p>
 
           {/* Count */}
           {stat.count && (
-            <p className="text-xs text-zinc-500">{stat.count}</p>
+            <p className="text-[10px] md:text-xs text-zinc-500">{stat.count}</p>
           )}
 
           {/* Progress bar for savings rate */}
           {stat.title === t('dashboard.stats.savings') && (
-            <div className="mt-3 h-2 bg-white/5 rounded-full overflow-hidden">
+            <div className="mt-2 md:mt-3 h-1.5 md:h-2 bg-white/5 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-full"
                 style={{ width: stat.value }}
