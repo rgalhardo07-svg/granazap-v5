@@ -375,70 +375,70 @@ export function ReportsPage() {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-6 relative overflow-hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10">
-            <TrendingUp className="w-24 h-24 text-[#22C55E]" />
+            <TrendingUp className="w-16 h-16 md:w-24 md:h-24 text-[#22C55E]" />
           </div>
           <div className="relative z-10">
-            <div className="text-sm text-zinc-400 mb-2 flex items-center gap-2">
+            <div className="text-xs md:text-sm text-zinc-400 mb-2 flex items-center gap-2">
               <div className="p-1.5 bg-[#22C55E]/10 rounded-lg">
-                <ArrowUpRight className="w-4 h-4 text-[#22C55E]" />
+                <ArrowUpRight className="w-3 h-3 md:w-4 md:h-4 text-[#22C55E]" />
               </div>
               {t('reports.totalIncome')}
             </div>
-            <p className="text-3xl font-bold font-mono text-white">
+            <p className="text-2xl md:text-3xl font-bold font-mono text-white">
               {formatCurrency(stats.income)}
             </p>
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-[10px] md:text-xs text-zinc-500 mt-1">
               {stats.incomeCount} {t('reports.transactionsRegistered')}
             </p>
           </div>
         </div>
 
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-6 relative overflow-hidden">
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10">
-            <TrendingDown className="w-24 h-24 text-[#EF4444]" />
+            <TrendingDown className="w-16 h-16 md:w-24 md:h-24 text-[#EF4444]" />
           </div>
           <div className="relative z-10">
-            <div className="text-sm text-zinc-400 mb-2 flex items-center gap-2">
+            <div className="text-xs md:text-sm text-zinc-400 mb-2 flex items-center gap-2">
               <div className="p-1.5 bg-[#EF4444]/10 rounded-lg">
-                <ArrowDownRight className="w-4 h-4 text-[#EF4444]" />
+                <ArrowDownRight className="w-3 h-3 md:w-4 md:h-4 text-[#EF4444]" />
               </div>
               {t('reports.totalExpenses')}
             </div>
-            <p className="text-3xl font-bold font-mono text-white">
+            <p className="text-2xl md:text-3xl font-bold font-mono text-white">
               {formatCurrency(stats.expenses)}
             </p>
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-[10px] md:text-xs text-zinc-500 mt-1">
               {stats.expensesCount} {t('reports.transactionsRegistered')}
             </p>
           </div>
         </div>
 
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-6 relative overflow-hidden">
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6 relative overflow-hidden sm:col-span-2 lg:col-span-1">
           <div className="absolute top-0 right-0 p-4 opacity-10">
-            <Wallet className="w-24 h-24 text-blue-500" />
+            <Wallet className="w-16 h-16 md:w-24 md:h-24 text-blue-500" />
           </div>
           <div className="relative z-10">
-            <div className="text-sm text-zinc-400 mb-2 flex items-center gap-2">
+            <div className="text-xs md:text-sm text-zinc-400 mb-2 flex items-center gap-2">
               <div className="p-1.5 bg-blue-500/10 rounded-lg">
-                <Wallet className="w-4 h-4 text-blue-500" />
+                <Wallet className="w-3 h-3 md:w-4 md:h-4 text-blue-500" />
               </div>
               {t('reports.periodBalance')}
             </div>
             <p className={cn(
-              "text-3xl font-bold font-mono",
+              "text-2xl md:text-3xl font-bold font-mono",
               stats.balance >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"
             )}>
               {formatCurrency(stats.balance)}
             </p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-zinc-500">
+              <span className="text-[10px] md:text-xs text-zinc-500">
                 {t('reports.savings')}:
               </span>
               <span className={cn(
-                "text-xs font-medium px-2 py-0.5 rounded-full",
+                "text-[10px] md:text-xs font-medium px-2 py-0.5 rounded-full",
                 stats.savingsRate >= 0 ? "bg-[#22C55E]/10 text-[#22C55E]" : "bg-[#EF4444]/10 text-[#EF4444]"
               )}>
                 {stats.savingsRate.toFixed(1)}%
