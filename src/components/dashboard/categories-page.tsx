@@ -89,14 +89,14 @@ export function CategoriesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">{t('categories.title')}</h1>
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            <h1 className="text-xl md:text-2xl font-bold text-white">{t('categories.title')}</h1>
             <span className={cn(
-              "px-3 py-1 rounded-full text-xs font-semibold",
+              "px-2 md:px-3 py-1 rounded-full text-xs font-semibold",
               accountFilter === 'pessoal' 
                 ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
                 : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
@@ -104,7 +104,7 @@ export function CategoriesPage() {
               {accountFilter === 'pessoal' ? `👤 ${t('sidebar.personal')}` : `🏢 ${t('sidebar.pj')}`}
             </span>
           </div>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="text-zinc-400 text-xs md:text-sm mt-1">
             {t('categories.description')}
           </p>
         </div>
@@ -126,30 +126,30 @@ export function CategoriesPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-400 mb-2">{t('categories.incomeTitle')}</p>
-              <p className="text-3xl font-bold text-[#22C55E]">
+              <p className="text-xs md:text-sm text-zinc-400 mb-2">{t('categories.incomeTitle')}</p>
+              <p className="text-2xl md:text-3xl font-bold text-[#22C55E]">
                 {incomeCategories.length}
               </p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#22C55E]/10 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-[#22C55E]" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-[#22C55E]/10 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-[#22C55E]" />
             </div>
           </div>
         </div>
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-6">
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-400 mb-2">{t('categories.expenseTitle')}</p>
-              <p className="text-3xl font-bold text-red-500">
+              <p className="text-xs md:text-sm text-zinc-400 mb-2">{t('categories.expenseTitle')}</p>
+              <p className="text-2xl md:text-3xl font-bold text-red-500">
                 {expenseCategories.length}
               </p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
-              <TrendingDown className="w-6 h-6 text-red-500" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+              <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
             </div>
           </div>
         </div>
@@ -157,22 +157,23 @@ export function CategoriesPage() {
 
       {/* Categorias de Receitas */}
       <div className="bg-[#111827] border border-white/5 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#22C55E]/10 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-[#22C55E]" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">{t('transactions.income')}</h2>
+              <h2 className="text-base md:text-lg font-semibold text-white">{t('transactions.income')}</h2>
               <p className="text-xs text-zinc-400">{t('categories.incomeTitle')}</p>
             </div>
           </div>
           <button
             onClick={() => handleAddNew('entrada')}
-            className="flex items-center gap-2 px-4 py-2 bg-[#22C55E] hover:bg-[#16A34A] text-white rounded-lg transition-colors text-sm font-medium"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 min-h-[44px] bg-[#22C55E] hover:bg-[#16A34A] text-white rounded-lg transition-colors text-xs md:text-sm font-medium w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
-            {t('categories.newCategory')}
+            <span className="hidden sm:inline">{t('categories.newCategory')}</span>
+            <span className="sm:hidden">{t('categories.new')}</span>
           </button>
         </div>
 
