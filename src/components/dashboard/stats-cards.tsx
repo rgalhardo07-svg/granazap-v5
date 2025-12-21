@@ -171,7 +171,7 @@ export function StatsCards() {
           className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6 hover:border-white/10 transition-colors"
         >
           {/* Icon & Change */}
-          <div className="flex items-start justify-between mb-4 md:mb-6">
+          <div className="flex items-start justify-between mb-3 md:mb-4">
             <div className={cn("p-2 rounded-lg bg-white/5", stat.iconColor)}>
               <stat.icon className="w-4 h-4 md:w-5 md:h-5" />
             </div>
@@ -186,10 +186,10 @@ export function StatsCards() {
           </div>
 
           {/* Title */}
-          <p className="text-xs md:text-sm text-zinc-400 mb-2 md:mb-3 line-clamp-2">{stat.title}</p>
+          <p className="text-xs md:text-sm text-zinc-400 mb-2 line-clamp-2">{stat.title}</p>
 
           {/* Value */}
-          <p className="text-xl md:text-2xl font-bold font-mono mb-1 md:mb-2">{stat.value}</p>
+          <p className="text-xl md:text-2xl font-bold font-mono mb-1">{stat.value}</p>
 
           {/* Count */}
           {stat.count && (
