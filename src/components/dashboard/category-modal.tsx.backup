@@ -1,0 +1,201 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/client";
+import { useUser } from "@/hooks/use-user";
+import { useAccountFilter } from "@/hooks/use-account-filter";
+import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
+import { IconSelector, suggestIcon } from "./icon-selector";
+
+const categorySchema = z.object({
+  descricao: z.string().min(1, "Nome é obrigatório"),
+});
+
+type CategoryFormValues = z.infer<typeof categorySchema>;
+
+interface CategoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  type: 'entrada' | 'saida';
+  categoryToEdit?: any;
+}
+
+export function CategoryModal({ 
+  isOpen, 
+  onClose, 
+  onSuccess, 
+  type,
+  categoryToEdit 
+}: CategoryModalProps) {
+  const { profile } = useUser();
+  const { filter: accountFilter } = useAccountFilter();
+  const [selectedIcon, setSelectedIcon] = useState<string>('');
+  
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<CategoryFormValues>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      descricao: "",
+    },
+  });
+
+  const accentColor = type === 'entrada' ? '#22C55E' : '#EF4444';
+  const accentColorHover = type === 'entrada' ? '#16A34A' : '#DC2626';
+
+  useEffect(() => {
+    if (isOpen) {
+      if (categoryToEdit) {
+        setValue('descricao', categoryToEdit.descricao);
+        setSelectedIcon(categoryToEdit.icon_key || '');
+      } else {
+        reset({ descricao: "" });
+        setSelectedIcon('');
+      }
+    }
+  }, [isOpen, categoryToEdit, reset, setValue]);
+
+  // Sugerir ícone automaticamente quando digitar
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setValue('descricao', value);
+    
+    // Se não tem ícone selecionado e está digitando, sugerir
+    if (!selectedIcon && value.length > 2) {
+      const suggested = suggestIcon(value, type);
+      setSelectedIcon(suggested);
+    }
+  };
+
+  const onSubmit = async (data: CategoryFormValues) => {
+    if (!profile) return;
+
+    try {
+      const supabase = createClient();
+      const categoryData = {
+        descricao: data.descricao,
+        tipo: type,
+        usuario_id: profile.id,
+        icon_key: selectedIcon || null,
+        tipo_conta: accountFilter,
+      };
+
+      let error;
+
+      if (categoryToEdit) {
+        const { error: updateError } = await supabase
+          .from('categoria_trasacoes')
+          .update(categoryData)
+          .eq('id', categoryToEdit.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('categoria_trasacoes')
+          .insert([categoryData]);
+        error = insertError;
+      }
+
+      if (error) throw error;
+
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error('Erro ao salvar categoria:', error);
+      alert('Erro ao salvar. Tente novamente.');
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={categoryToEdit ? 'Editar Categoria' : 'Nova Categoria'}
+      className="max-w-lg"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Aviso de Contexto: Conta Pessoal/PJ + Tipo */}
+        <div className="flex flex-col items-center gap-2 pb-2 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+              {accountFilter === 'pessoal' ? '👤 Conta Pessoal' : '🏢 Conta PJ'}
+            </span>
+            <span className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-semibold",
+              type === 'entrada'
+                ? "bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/30"
+                : "bg-red-500/10 text-red-500 border border-red-500/30"
+            )}>
+              {type === 'entrada' ? '💰 Receita' : '💸 Despesa'}
+            </span>
+          </div>
+          <p className="text-[10px] text-zinc-500 text-center">
+            Esta categoria será criada para {accountFilter === 'pessoal' ? 'uso pessoal' : 'uso empresarial (PJ)'}
+          </p>
+        </div>
+
+        {/* Nome da Categoria */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-white">
+            Nome da Categoria <span className="text-red-400">*</span>
+          </label>
+          <Input
+            {...register("descricao")}
+            onChange={handleDescriptionChange}
+            placeholder={type === 'entrada' ? "Ex: Salário, Freelance..." : "Ex: Alimentação, Transporte..."}
+            className="bg-[#0A0F1C] border-white/10 text-white placeholder:text-zinc-500 h-11"
+            style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
+            onFocus={(e) => e.target.style.borderColor = accentColor}
+            onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+          />
+          {errors.descricao && (
+            <p className="text-xs text-red-400">{errors.descricao.message}</p>
+          )}
+        </div>
+
+        {/* Seletor de Ícones */}
+        <IconSelector
+          selectedIcon={selectedIcon}
+          onSelectIcon={setSelectedIcon}
+          accentColor={accentColor}
+        />
+
+        {/* Footer */}
+        <div className="flex justify-end gap-3 pt-3 border-t border-white/5">
+          <Button
+            type="button"
+            onClick={onClose}
+            className="px-6 bg-transparent border border-white/10 text-zinc-400 hover:text-white hover:bg-white/5"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="px-6 text-white font-medium"
+            style={{ backgroundColor: accentColor }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = accentColorHover}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = accentColor}
+          >
+            {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {categoryToEdit ? 'Salvar Alterações' : 'Criar Categoria'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function cn(...classes: any[]) {
+  return classes.filter(Boolean).join(' ');
+}
