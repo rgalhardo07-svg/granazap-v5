@@ -207,6 +207,7 @@ const translations = {
     'investments.subtitle': 'Gerencie sua carteira de investimentos • Ações, FIIs, Cripto, Renda Fixa e mais',
     'investments.priceUpdate': '📊 Preços atualizados 3x/dia (9h, 12h, 18h) seg-sex • Criptos: 4/4h',
     'investments.newPosition': 'Nova Posição',
+    'investments.new': 'Novo',
 
     // Summary Cards
     'investments.summary.investedValue': 'Valor Investido',
@@ -573,6 +574,7 @@ const translations = {
     'categories.incomeType': 'Receita',
     'categories.expenseType': 'Despesa',
     'categories.newCategory': 'Nova Categoria',
+    'categories.new': 'Nova',
     'categories.noIncomeCategories': 'Nenhuma categoria de receita cadastrada',
     'categories.noExpenseCategories': 'Nenhuma categoria de despesa cadastrada',
     'categories.createFirstCategory': 'Criar primeira categoria',
@@ -609,6 +611,7 @@ const translations = {
     'cards.title': 'Cartões de Crédito',
     'cards.description': 'Gerencie seus cartões de crédito e faturas',
     'cards.newCard': 'Novo Cartão',
+    'cards.new': 'Novo',
     'cards.noCards': 'Nenhum cartão cadastrado',
     'cards.addFirstCard': 'Adicionar Primeiro Cartão',
     'cards.firstCardDescription': 'Adicione seu primeiro cartão de crédito para começar a gerenciar suas faturas',
@@ -1478,6 +1481,7 @@ const translations = {
     'investments.subtitle': 'Gestiona tu cartera de inversiones • Acciones, FIIs, Cripto, Renta Fija y más',
     'investments.priceUpdate': '📊 Precios actualizados 3x/día (9h, 12h, 18h) lun-vie • Criptos: 4/4h',
     'investments.newPosition': 'Nueva Posición',
+    'investments.new': 'Nuevo',
 
     // Summary Cards
     'investments.summary.investedValue': 'Valor Invertido',
@@ -1794,6 +1798,7 @@ const translations = {
     'categories.incomeType': 'Ingreso',
     'categories.expenseType': 'Gasto',
     'categories.newCategory': 'Nueva Categoría',
+    'categories.new': 'Nueva',
     'categories.modal.editTitle': 'Editar Categoría',
     'categories.modal.newTitle': 'Nueva Categoría',
     'categories.modal.contextPersonal': 'Cuenta Personal',
@@ -1822,6 +1827,7 @@ const translations = {
     'cards.title': 'Tarjetas de Crédito',
     'cards.description': 'Gestiona tus tarjetas de crédito y facturas',
     'cards.newCard': 'Nueva Tarjeta',
+    'cards.new': 'Nueva',
     'cards.limitUsed': 'Límite usado',
     'cards.used': 'Usado',
     'cards.available': 'Disponible',
@@ -2604,6 +2610,7 @@ const translations = {
     'categories.incomeType': 'Income',
     'categories.expenseType': 'Expense',
     'categories.newCategory': 'New Category',
+    'categories.new': 'New',
     'categories.noIncomeCategories': 'No income categories registered',
     'categories.noExpenseCategories': 'No expense categories registered',
     'categories.createFirstCategory': 'Create first category',

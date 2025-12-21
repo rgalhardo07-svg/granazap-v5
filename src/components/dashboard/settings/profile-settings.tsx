@@ -161,12 +161,12 @@ export function ProfileSettings() {
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pt-4">
         <button
           onClick={handleSave}
           disabled={saving}
           className={cn(
-            "w-full md:w-auto px-8 py-3 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50",
+            "w-full md:w-auto px-6 md:px-8 py-3 min-h-[48px] text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-sm md:text-base",
             saved ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
           )}
         >

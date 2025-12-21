@@ -36,7 +36,8 @@ export function DashboardHeader() {
         {/* Mobile: Hamburger Menu */}
         <button
           onClick={toggle}
-          className="md:hidden p-2 hover:bg-white/5 rounded-lg transition-colors"
+          className="md:hidden p-3 hover:bg-white/5 rounded-lg transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center relative z-10"
+          aria-label="Menu"
         >
           <Menu className="w-6 h-6" />
         </button>

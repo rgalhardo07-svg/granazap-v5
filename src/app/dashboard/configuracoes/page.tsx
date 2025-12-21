@@ -35,19 +35,19 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24 md:pb-0">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          <Settings className="w-8 h-8 text-[#22C55E]" />
+        <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
+          <Settings className="w-6 h-6 md:w-8 md:h-8 text-[#22C55E]" />
           {t('settings.title')}
         </h1>
-        <p className="text-zinc-400 text-sm mt-1">
+        <p className="text-zinc-400 text-xs md:text-sm mt-1">
           {t('settings.description')}
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8">
         {/* Sidebar */}
         <SettingsSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         

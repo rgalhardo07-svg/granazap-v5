@@ -152,17 +152,17 @@ export default function GoalsPage() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-20 md:pb-0">
+    <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
             <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
               <Target className="w-6 h-6 md:w-8 md:h-8 text-blue-500" />
               {t('goals.title')}
             </h1>
             <span className={cn(
-              "px-3 py-1 rounded-full text-xs font-semibold border",
+              "px-2 md:px-3 py-1 rounded-full text-xs font-semibold border",
               accountFilter === 'pessoal'
                 ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
                 : "bg-purple-500/10 text-purple-400 border-purple-500/20"
@@ -170,29 +170,29 @@ export default function GoalsPage() {
               {accountFilter === 'pessoal' ? `👤 ${t('sidebar.personal')}` : `🏢 ${t('sidebar.pj')}`}
             </span>
           </div>
-          <p className="text-sm md:text-base text-zinc-400 mt-1">{t('goals.description')}</p>
+          <p className="text-xs md:text-sm text-zinc-400 mt-1">{t('goals.description')}</p>
         </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all active:scale-95 shadow-lg shadow-blue-900/20"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all active:scale-95 shadow-lg shadow-blue-900/20 text-sm"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4 md:w-5 md:h-5" />
           {t('goals.newGoal')}
         </button>
       </div>
 
       {/* Resumo Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         {/* Card 1 - Receita */}
-        <div className="bg-[#111827] border border-white/5 p-5 rounded-xl">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="p-3 bg-emerald-500/10 rounded-xl">
-              <TrendingUp className="w-6 h-6 text-emerald-500" />
+        <div className="bg-[#111827] border border-white/5 p-4 md:p-5 rounded-xl">
+          <div className="flex items-center gap-3 md:gap-4 mb-3">
+            <div className="p-2 md:p-3 bg-emerald-500/10 rounded-xl flex-shrink-0">
+              <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />
             </div>
-            <div>
-              <p className="text-sm text-zinc-400">{t('goals.totalIncome')}</p>
-              <h3 className="text-xl font-bold text-white">
+            <div className="min-w-0">
+              <p className="text-xs md:text-sm text-zinc-400 truncate">{t('goals.totalIncome')}</p>
+              <h3 className="text-lg md:text-xl font-bold text-white truncate">
                 {formatCurrency(totalIncomeRealized)}
               </h3>
             </div>
@@ -204,22 +204,22 @@ export default function GoalsPage() {
                 style={{ width: `${Math.min(totalIncomeProgress, 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-zinc-500">{t('goals.valueLimit')}: {formatCurrency(totalIncomeLimit)}</span>
-              <span className="text-emerald-400">{totalIncomeProgress.toFixed(0)}%</span>
+            <div className="flex justify-between text-[10px] md:text-xs">
+              <span className="text-zinc-500 truncate">{t('goals.valueLimit')}: {formatCurrency(totalIncomeLimit)}</span>
+              <span className="text-emerald-400 flex-shrink-0">{totalIncomeProgress.toFixed(0)}%</span>
             </div>
           </div>
         </div>
 
         {/* Card 2 - Gasto */}
-        <div className="bg-[#111827] border border-white/5 p-5 rounded-xl">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="p-3 bg-red-500/10 rounded-xl">
-              <ArrowDownCircle className="w-6 h-6 text-red-500" />
+        <div className="bg-[#111827] border border-white/5 p-4 md:p-5 rounded-xl">
+          <div className="flex items-center gap-3 md:gap-4 mb-3">
+            <div className="p-2 md:p-3 bg-red-500/10 rounded-xl flex-shrink-0">
+              <ArrowDownCircle className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
             </div>
-            <div>
-              <p className="text-sm text-zinc-400">{t('goals.totalSpent')}</p>
-              <h3 className="text-xl font-bold text-white">
+            <div className="min-w-0">
+              <p className="text-xs md:text-sm text-zinc-400 truncate">{t('goals.totalSpent')}</p>
+              <h3 className="text-lg md:text-xl font-bold text-white truncate">
                 {formatCurrency(totalSpent)}
               </h3>
             </div>
@@ -231,21 +231,21 @@ export default function GoalsPage() {
                 style={{ width: `${Math.min(totalProgress, 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-zinc-500">{t('goals.totalBudget')}</span>
-              <span className="text-red-400">{totalProgress.toFixed(0)}%</span>
+            <div className="flex justify-between text-[10px] md:text-xs">
+              <span className="text-zinc-500 truncate">{t('goals.totalBudget')}</span>
+              <span className="text-red-400 flex-shrink-0">{totalProgress.toFixed(0)}%</span>
             </div>
           </div>
         </div>
 
         {/* Card 3 - Orçamento */}
-        <div className="bg-[#111827] border border-white/5 p-5 rounded-xl flex items-center gap-4">
-          <div className="p-3 bg-blue-500/10 rounded-xl">
-            <Target className="w-6 h-6 text-blue-500" />
+        <div className="bg-[#111827] border border-white/5 p-4 md:p-5 rounded-xl flex items-center gap-3 md:gap-4">
+          <div className="p-2 md:p-3 bg-blue-500/10 rounded-xl flex-shrink-0">
+            <Target className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
           </div>
-          <div>
-            <p className="text-sm text-zinc-400">{t('goals.valueLimit')}</p>
-            <h3 className="text-xl font-bold text-white">
+          <div className="min-w-0">
+            <p className="text-xs md:text-sm text-zinc-400 truncate">{t('goals.valueLimit')}</p>
+            <h3 className="text-lg md:text-xl font-bold text-white truncate">
               {formatCurrency(totalLimit)}
             </h3>
             <p className="text-xs text-zinc-500 mt-1">{t('goals.totalBudget')}</p>
