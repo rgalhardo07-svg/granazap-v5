@@ -5,12 +5,19 @@ import { Plus, TrendingUp, TrendingDown, ArrowLeftRight, X } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { TransactionModal } from "./transaction-modal";
 import { useLanguage } from "@/contexts/language-context";
+import { usePathname } from "next/navigation";
 
 export function FABButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'receita' | 'despesa'>('despesa');
   const { t } = useLanguage();
+  const pathname = usePathname();
+  
+  // Hide FAB on Scheduled page (has its own + button in header)
+  if (pathname === '/dashboard/agendados') {
+    return null;
+  }
 
   const handleAction = (type: 'receita' | 'despesa') => {
     setModalType(type);

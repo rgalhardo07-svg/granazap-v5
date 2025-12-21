@@ -265,14 +265,6 @@ export function FutureTransactionsPage() {
   if (loading) {
     return (
       <div className="space-y-3 md:space-y-6 pb-20 md:pb-0">
-        {/* Header Skeleton */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="h-8 w-64 bg-zinc-800/50 rounded animate-pulse" />
-            <div className="h-4 w-48 bg-zinc-800/50 rounded animate-pulse mt-1" />
-          </div>
-        </div>
-
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
           <CardSkeleton />
