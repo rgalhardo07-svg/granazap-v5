@@ -118,26 +118,27 @@ export function ChartsSection() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
       {/* Cash Flow Chart */}
-      <div className="lg:col-span-2 bg-[#111827] border border-white/5 rounded-xl p-6">
-        <h3 className="text-lg font-semibold mb-6">{t('dashboard.charts.cashFlow')}</h3>
+      <div className="lg:col-span-2 bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6">
+        <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6">{t('dashboard.charts.cashFlow')}</h3>
         
-        <div className="w-full" style={{ height: '256px' }}>
-          <ResponsiveContainer width="100%" height={256}>
+        <div className="w-full h-[200px] md:h-[256px]">
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart data={cashFlowData} barGap={4}>
               <XAxis 
                 dataKey="name" 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: '#71717A', fontSize: 12 }} 
+                tick={{ fill: '#71717A', fontSize: 11 }} 
                 dy={10}
               />
               <YAxis 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: '#71717A', fontSize: 12 }} 
+                tick={{ fill: '#71717A', fontSize: 11 }} 
                 tickFormatter={(value) => `${getCurrencySymbol()}${value}`}
+                width={60}
               />
               <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} />
               <Bar 
@@ -159,32 +160,32 @@ export function ChartsSection() {
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-center gap-6 mt-6">
+        <div className="flex items-center justify-center gap-4 md:gap-6 mt-4 md:mt-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#22C55E]" />
-            <span className="text-sm text-zinc-400">{t('dashboard.stats.income')}</span>
+            <span className="text-xs md:text-sm text-zinc-400">{t('dashboard.stats.income')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#EF4444]" />
-            <span className="text-sm text-zinc-400">{t('dashboard.stats.expenses')}</span>
+            <span className="text-xs md:text-sm text-zinc-400">{t('dashboard.stats.expenses')}</span>
           </div>
         </div>
       </div>
 
       {/* Expenses by Category */}
-      <div className="bg-[#111827] border border-white/5 rounded-xl p-6 flex flex-col">
-        <h3 className="text-lg font-semibold mb-6">{t('dashboard.charts.expensesByCategory')}</h3>
+      <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6 flex flex-col">
+        <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6">{t('dashboard.charts.expensesByCategory')}</h3>
         
         {/* Donut Chart */}
-        <div className="flex-1 relative" style={{ minHeight: '200px', height: '200px' }}>
-          <ResponsiveContainer width="100%" height={200}>
+        <div className="flex-1 relative h-[180px] md:h-[200px]">
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={expensesByCategory}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={80}
+                innerRadius={50}
+                outerRadius={70}
                 paddingAngle={5}
                 dataKey="value"
                 stroke="none"
@@ -214,39 +215,39 @@ export function ChartsSection() {
           
           {/* Center Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-xl font-bold font-mono">
+            <span className="text-lg md:text-xl font-bold font-mono">
               {totalExpenses >= 1000 
                 ? `${getCurrencySymbol()} ${(totalExpenses / 1000).toFixed(1)}K` 
                 : `${getCurrencySymbol()} ${totalExpenses}`}
             </span>
-            <span className="text-xs text-zinc-500">{t('dashboard.charts.total')}</span>
+            <span className="text-[10px] md:text-xs text-zinc-500">{t('dashboard.charts.total')}</span>
           </div>
         </div>
 
         {/* Legend List */}
-        <div className="mt-6 space-y-3">
+        <div className="mt-4 md:mt-6 space-y-2 md:space-y-3">
           {expensesByCategory.map((cat, index) => (
             <div key={index} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div
-                  className="w-3 h-3 rounded-full"
+                  className="w-3 h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: cat.color }}
                 />
-                <span className="text-sm text-zinc-400 truncate max-w-[100px]" title={cat.name}>
+                <span className="text-xs md:text-sm text-zinc-400 truncate" title={cat.name}>
                   {cat.name}
                 </span>
               </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold font-mono">
+              <div className="text-right flex-shrink-0 ml-2">
+                <p className="text-xs md:text-sm font-semibold font-mono">
                   {formatCurrency(cat.value)}
                 </p>
-                <p className="text-xs text-zinc-500">{cat.percentage}%</p>
+                <p className="text-[10px] md:text-xs text-zinc-500">{cat.percentage}%</p>
               </div>
             </div>
           ))}
           
           {expensesByCategory.length === 0 && (
-            <div className="text-center text-zinc-500 py-4 text-sm">
+            <div className="text-center text-zinc-500 py-4 text-xs md:text-sm">
               {t('dashboard.charts.noExpenses')}
             </div>
           )}

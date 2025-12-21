@@ -48,33 +48,33 @@ export function RecentTransactions() {
   }
 
   return (
-    <div className="bg-[#111827] border border-white/5 rounded-xl p-6">
+    <div className="bg-[#111827] border border-white/5 rounded-xl p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">{t('dashboard.recent.title')}</h3>
+      <div className="flex items-center justify-between mb-4 md:mb-6">
+        <h3 className="text-base md:text-lg font-semibold">{t('dashboard.recent.title')}</h3>
         <Link
           href="/dashboard/transacoes"
-          className="text-sm text-[#22C55E] hover:text-[#16A34A] font-medium transition-colors"
+          className="text-xs md:text-sm text-[#22C55E] hover:text-[#16A34A] font-medium transition-colors"
         >
           {t('dashboard.recent.viewAll')}
         </Link>
       </div>
 
       {/* Transactions List */}
-      <div className="space-y-3">
+      <div className="space-y-2 md:space-y-3">
         {recentTransactions.length === 0 ? (
-          <p className="text-center text-zinc-500 py-8">{t('dashboard.recent.empty')}</p>
+          <p className="text-center text-zinc-500 py-8 text-sm">{t('dashboard.recent.empty')}</p>
         ) : (
           recentTransactions.map((transaction) => {
             const Icon = getIcon(transaction.tipo);
             return (
               <div
                 key={transaction.id}
-                className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                className="flex items-center gap-3 md:gap-4 p-3 rounded-lg hover:bg-white/5 active:bg-white/10 transition-colors cursor-pointer min-h-[60px]"
               >
                 {/* Icon */}
                 <div className={cn(
-                  "p-2 rounded-lg",
+                  "p-2 rounded-lg flex-shrink-0",
                   transaction.tipo === "entrada" ? "bg-[#22C55E]/10" : "bg-white/5"
                 )}>
                   <Icon className={cn(
@@ -85,19 +85,19 @@ export function RecentTransactions() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{transaction.descricao}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white/5 text-zinc-400">
+                  <p className="text-sm md:text-sm font-medium truncate">{transaction.descricao}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] md:text-xs font-medium bg-white/5 text-zinc-400 truncate max-w-[120px]">
                       {transaction.categoria?.descricao || t('dashboard.recent.noCategory')}
                     </span>
-                    <span className="text-xs text-zinc-500">{formatDate(transaction.data)}</span>
+                    <span className="text-[10px] md:text-xs text-zinc-500 whitespace-nowrap">{formatDate(transaction.data)}</span>
                   </div>
                 </div>
 
                 {/* Amount */}
-                <div className="text-right">
+                <div className="text-right flex-shrink-0">
                   <p className={cn(
-                    "text-sm font-semibold font-mono",
+                    "text-sm md:text-sm font-semibold font-mono",
                     transaction.tipo === "entrada" ? "text-[#22C55E]" : "text-[#EF4444]"
                   )}>
                     {transaction.tipo === "entrada" ? "+" : "-"}{formatCurrency(Number(transaction.valor))}
