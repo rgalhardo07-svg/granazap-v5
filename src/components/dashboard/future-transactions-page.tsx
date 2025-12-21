@@ -292,47 +292,19 @@ export function FutureTransactionsPage() {
   return (
     <div className="space-y-3 md:space-y-6 pb-20 md:pb-0">
       {/* Header */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h1 className="text-xl md:text-2xl font-bold text-white">{t('future.title')}</h1>
-            <p className="text-zinc-400 text-xs md:text-sm mt-1">
-              {t('future.subtitle')}
-            </p>
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <h1 className="text-xl md:text-2xl font-bold text-white">{t('future.title')}</h1>
+          <p className="text-zinc-400 text-xs md:text-sm mt-1">
+            {t('future.subtitle')}
+          </p>
+        </div>
+        {isRefetching && (
+          <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span className="hidden sm:inline">{t('common.updating')}</span>
           </div>
-          {isRefetching && (
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              <span className="hidden sm:inline">{t('common.updating')}</span>
-            </div>
-          )}
-        </div>
-        
-        {/* Buttons Row */}
-        <div className="grid grid-cols-2 gap-2">
-          <button 
-            onClick={() => {
-              setModalType('entrada');
-              setSelectedTransaction(null);
-              setIsCreateModalOpen(true);
-            }}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 min-h-[48px] bg-[#22C55E] hover:bg-[#16A34A] text-white rounded-lg transition-colors font-medium text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>A Receber</span>
-          </button>
-          <button 
-            onClick={() => {
-              setModalType('saida');
-              setSelectedTransaction(null);
-              setIsCreateModalOpen(true);
-            }}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 min-h-[48px] bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>A Pagar</span>
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Stats Cards */}
