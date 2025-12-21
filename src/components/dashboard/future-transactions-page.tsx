@@ -335,48 +335,48 @@ export function FutureTransactionsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-yellow-500" />
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-3 md:p-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
+              <Clock className="w-4 h-4 md:w-5 md:h-5 text-yellow-500" />
             </div>
-            <div>
-              <p className="text-xs text-zinc-500">{t('future.pending')}</p>
-              <p className="text-xl font-bold text-white">{stats.totalPending}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#22C55E]/10 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-[#22C55E]" />
-            </div>
-            <div>
-              <p className="text-xs text-zinc-500">{t('future.toReceive')}</p>
-              <p className="text-lg font-bold text-[#22C55E]">{formatCurrency(stats.totalIncome)}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] md:text-xs text-zinc-500 truncate">{t('future.pending')}</p>
+              <p className="text-lg md:text-xl font-bold text-white">{stats.totalPending}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-              <TrendingDown className="w-5 h-5 text-red-500" />
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-3 md:p-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-[#22C55E]/10 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-[#22C55E]" />
             </div>
-            <div>
-              <p className="text-xs text-zinc-500">{t('future.toPay')}</p>
-              <p className="text-lg font-bold text-red-500">{formatCurrency(stats.totalExpense)}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] md:text-xs text-zinc-500 truncate">{t('future.toReceive')}</p>
+              <p className="text-sm md:text-lg font-bold text-[#22C55E] truncate">{formatCurrency(stats.totalIncome)}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-[#111827] border border-white/5 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-red-500" />
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-3 md:p-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+              <TrendingDown className="w-4 h-4 md:w-5 md:h-5 text-red-500" />
             </div>
-            <div>
+            <div className="min-w-0">
+              <p className="text-[10px] md:text-xs text-zinc-500 truncate">{t('future.toPay')}</p>
+              <p className="text-sm md:text-lg font-bold text-red-500 truncate">{formatCurrency(stats.totalExpense)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-3 md:p-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+              <XCircle className="w-4 h-4 md:w-5 md:h-5 text-red-500" />
+            </div>
+            <div className="min-w-0">
               <p className="text-xs text-zinc-500">{t('future.overdue')}</p>
               <p className="text-xl font-bold text-white">{stats.totalOverdue}</p>
             </div>
