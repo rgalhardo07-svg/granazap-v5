@@ -41,16 +41,6 @@ const BottomNavDynamic = dynamic(
   }
 );
 
-// FAB Button
-const FABButtonDynamic = dynamic(
-  () => import('@/components/dashboard/fab-button').then(m => ({
-    default: m.FABButton
-  })),
-  {
-    ssr: false
-  }
-);
-
 export default function DashboardLayout({
   children,
 }: {
@@ -78,9 +68,6 @@ export default function DashboardLayout({
 
           {/* Bottom Navigation - Mobile Only */}
           <BottomNavDynamic />
-
-          {/* FAB Button - Mobile Only */}
-          <FABButtonDynamic />
         </div>
       </SidebarProvider>
     </AccountFilterProvider>
