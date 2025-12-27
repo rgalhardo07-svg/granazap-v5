@@ -85,12 +85,12 @@ export function WhatsAppAgentPage() {
       description: "Adicione gastos já realizados",
       examples: [
         "Gastei 230 no mercado",
-        "Paguei 85 reais de remédio",
+        "Comprei 85 reais de remédio",
+        "Gastei 80 no supermercado com cartão de débito Nubank",
         "Almocei no restaurante 45 reais, alimentação",
-        "Abasteci o carro com 200 reais de gasolina na empresa",
-        "Paguei 95 de Uber transporte",
-        "Comprei material de escritório 120 na empresa",
-        "Gastei 80 com diarista, serviços domésticos"
+        "Recebi 5000 de salário na conta Nubank",
+        "Gastei 95 de Uber transporte",
+        "Comprei material de escritório 120 na empresa"
       ]
     },
     {
@@ -99,7 +99,7 @@ export function WhatsAppAgentPage() {
       examples: [
         "Recebi 3500 de salário",
         "Entrou 800 de freelance no perfil empresarial",
-        "Recebi 250 de comissão de vendas na empresa",
+        "Recebi 260 de comissão de vendas na empresa",
         "Recebi 180 de reembolso do plano de saúde",
         "Vendi um produto por 450 reais na empresa",
         "Recebi aluguel 1500",
@@ -135,20 +135,30 @@ export function WhatsAppAgentPage() {
       description: "Gerencie contas a pagar e recorrentes",
       examples: [
         "Tenho IPTU de 70 reais vence dia 10/01/2026 e são 3 parcelas",
+        "Comprei notebook de 3000 em 12 parcelas no crédito Nubank",
+        "Agendar 1500 na conta Bradesco PJ para dia 10",
         "Tenho Netflix mensal recorrente de 29,90 e data final é 10/01/2027",
-        "Conta de luz vence dia 15 próximo mês 150 reais",
         "Aluguel recorrente 1200 todo dia 5"
       ]
     },
     {
-      title: "Cartão de Crédito",
-      description: "Controle faturas e limites",
+      title: "Cartões (Débito e Crédito)",
+      description: "Use cartões e controle faturas",
       examples: [
-        "Comprei roupa 150 no cartão Nubank",
-        "Gastei 300 parcelado em 3x no cartão Itaú",
+        "Gastei 80 no supermercado com cartão de débito Nubank",
+        "Comprei roupa 150 no crédito Nubank",
+        "Gastei 300 parcelado em 3x no cartão de crédito Itaú",
         "Qual a fatura atual do cartão Nubank?",
-        "Quanto tenho de limite disponível no Itaú?",
-        "Pagar fatura do cartão Nubank"
+        "Quanto tenho de limite disponível no Itaú?"
+      ]
+    },
+    {
+      title: "Excluir e Gerenciar",
+      description: "Exclua transações e gerencie dados",
+      examples: [
+        "Excluir transação 12345",
+        "Cancelar lançamento 67890",
+        "Remover última transação"
       ]
     }
   ];
@@ -364,37 +374,256 @@ export function WhatsAppAgentPage() {
         </div>
       </div>
 
-      {/* Tips Card */}
-      <div className="bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-transparent border border-yellow-500/20 rounded-xl p-6">
-        <div className="flex items-start gap-3 mb-4">
-          <div className="p-2 bg-yellow-500/10 rounded-lg">
-            <Sparkles className="w-5 h-5 text-yellow-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-1">
-              💡 Dicas para Melhor Experiência
-            </h3>
+      {/* Practical Tips Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Sparkles className="w-5 h-5 text-yellow-500" />
+          <h2 className="text-xl font-bold text-white">💡 Dicas Importantes</h2>
+        </div>
+
+        {/* Transaction Types */}
+        <div className="bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent border border-green-500/20 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <span className="text-2xl">🔹</span>
+            Entenda a Diferença: Gastei vs Paguei vs Tenho que Pagar
+          </h3>
+          
+          <div className="space-y-4">
+            <div className="bg-[#0A0F1C] rounded-lg p-4 border border-white/5">
+              <h4 className="font-semibold text-green-400 mb-2">✅ "GASTEI" - Transação Imediata (Já Aconteceu)</h4>
+              <p className="text-sm text-zinc-400 mb-3">Use quando você acabou de fazer uma compra AGORA:</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>"Gastei 50 no mercado"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>"Comprei 150 na farmácia"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>"Recebi 3000 de salário"</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#0A0F1C] rounded-lg p-4 border border-white/5">
+              <h4 className="font-semibold text-blue-400 mb-2">📅 "TENHO QUE PAGAR" - Agendamento Futuro</h4>
+              <p className="text-sm text-zinc-400 mb-3">Use para pagamentos que vão acontecer no futuro:</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <span>"Tenho que pagar 1500 de aluguel dia 10"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <span>"Agendar conta de luz de 200 para dia 15"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <span>"Preciso pagar 500 de dentista semana que vem"</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#0A0F1C] rounded-lg p-4 border border-white/5">
+              <h4 className="font-semibold text-purple-400 mb-2">✔️ "PAGUEI" - Confirmar Pagamento Agendado</h4>
+              <p className="text-sm text-zinc-400 mb-3">Use para confirmar algo que estava agendado:</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-purple-500 flex-shrink-0 mt-0.5" />
+                  <span>"Paguei o aluguel hoje"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-purple-500 flex-shrink-0 mt-0.5" />
+                  <span>"Quitei a parcela 2 do IPTU"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-purple-500 flex-shrink-0 mt-0.5" />
+                  <span>"Efetuei o pagamento da internet"</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        
-        <ul className="space-y-3 text-sm text-zinc-300">
-          <li className="flex items-start gap-3">
-            <span className="text-yellow-400 font-bold flex-shrink-0">•</span>
-            <span>Seja claro e objetivo nas mensagens (ex: "gastei 50 no mercado")</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-yellow-400 font-bold flex-shrink-0">•</span>
-            <span>Informe sempre o valor e a categoria quando possível</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-yellow-400 font-bold flex-shrink-0">•</span>
-            <span>Use o comando "ajuda" ou "menu" quando tiver dúvidas</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-yellow-400 font-bold flex-shrink-0">•</span>
-            <span>O agente entende linguagem natural - fale como se estivesse conversando!</span>
-          </li>
-        </ul>
+
+        {/* Credit vs Debit */}
+        <div className="bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <span className="text-2xl">💳</span>
+            Cartão de Débito vs Crédito
+          </h3>
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-[#0A0F1C] rounded-lg p-4 border border-white/5">
+              <h4 className="font-semibold text-green-400 mb-2">Débito - Desconta Agora</h4>
+              <p className="text-xs text-zinc-400 mb-3">Registra imediatamente e desconta do saldo:</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>"Gastei 80 no supermercado com cartão de débito Nubank"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>"Comprei 45 na farmácia débito Itaú"</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#0A0F1C] rounded-lg p-4 border border-white/5">
+              <h4 className="font-semibold text-orange-400 mb-2">Crédito - Fica em Aberto</h4>
+              <p className="text-xs text-zinc-400 mb-3">Fica em aberto até pagar a fatura:</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-orange-500 flex-shrink-0 mt-0.5" />
+                  <span>"Comprei 250 de roupas no crédito Nubank"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#111827] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-orange-500 flex-shrink-0 mt-0.5" />
+                  <span>"Gastei 180 no restaurante com cartão de crédito Itaú"</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Installments */}
+        <div className="bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <span className="text-2xl">📊</span>
+            Parcelamento em Cartão de Crédito
+          </h3>
+          
+          <div className="space-y-2">
+            <div className="flex items-start gap-2 text-sm text-zinc-300 bg-[#0A0F1C] rounded-lg px-4 py-3 border border-white/5">
+              <Send className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
+              <span>"Comprei notebook de 3000 em 12 parcelas no crédito Nubank"</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-zinc-300 bg-[#0A0F1C] rounded-lg px-4 py-3 border border-white/5">
+              <Send className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
+              <span>"Parcelei 600 em 6x no cartão de crédito Itaú"</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-zinc-300 bg-[#0A0F1C] rounded-lg px-4 py-3 border border-white/5">
+              <Send className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
+              <span>"Compra de 1200 dividida em 10 parcelas crédito Inter"</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bank Account Specific */}
+        <div className="bg-gradient-to-br from-cyan-500/10 via-cyan-500/5 to-transparent border border-cyan-500/20 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <span className="text-2xl">🏦</span>
+            Transações em Conta Bancária Específica
+          </h3>
+          
+          <p className="text-sm text-zinc-400 mb-3">Mencione a conta para vincular a transação:</p>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2 text-sm text-zinc-300 bg-[#0A0F1C] rounded-lg px-4 py-3 border border-white/5">
+              <Send className="w-4 h-4 text-cyan-500 flex-shrink-0 mt-0.5" />
+              <span>"Recebi 5000 de salário na conta Nubank"</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-zinc-300 bg-[#0A0F1C] rounded-lg px-4 py-3 border border-white/5">
+              <Send className="w-4 h-4 text-cyan-500 flex-shrink-0 mt-0.5" />
+              <span>"Gastei 800 de aluguel pela conta Itaú"</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-zinc-300 bg-[#0A0F1C] rounded-lg px-4 py-3 border border-white/5">
+              <Send className="w-4 h-4 text-cyan-500 flex-shrink-0 mt-0.5" />
+              <span>"Agendar 1500 na conta Bradesco PJ para dia 10"</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Recurring Payments */}
+        <div className="bg-gradient-to-br from-pink-500/10 via-pink-500/5 to-transparent border border-pink-500/20 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <span className="text-2xl">🔄</span>
+            Lançamentos Recorrentes
+          </h3>
+          
+          <p className="text-sm text-zinc-400 mb-3">Configure pagamentos que se repetem todo mês:</p>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2 text-sm text-zinc-300 bg-[#0A0F1C] rounded-lg px-4 py-3 border border-white/5">
+              <Send className="w-4 h-4 text-pink-500 flex-shrink-0 mt-0.5" />
+              <span>"Aluguel de 1500 todo dia 10 até 31/12/2025"</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-zinc-300 bg-[#0A0F1C] rounded-lg px-4 py-3 border border-white/5">
+              <Send className="w-4 h-4 text-pink-500 flex-shrink-0 mt-0.5" />
+              <span>"Salário de 5000 recorrente até dezembro de 2025"</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-zinc-300 bg-[#0A0F1C] rounded-lg px-4 py-3 border border-white/5">
+              <Send className="w-4 h-4 text-pink-500 flex-shrink-0 mt-0.5" />
+              <span>"Internet empresa 800 mensal de janeiro a junho"</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Queries and Reports */}
+        <div className="bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-transparent border border-yellow-500/20 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <span className="text-2xl">📈</span>
+            Consultas e Relatórios Avançados
+          </h3>
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-yellow-400 text-sm">Saldo de Contas:</h4>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#0A0F1C] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-yellow-500 flex-shrink-0 mt-0.5" />
+                  <span>"Qual o saldo da conta Nubank?"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#0A0F1C] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-yellow-500 flex-shrink-0 mt-0.5" />
+                  <span>"Saldo de todas as contas"</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-semibold text-orange-400 text-sm">Fatura de Cartão:</h4>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#0A0F1C] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-orange-500 flex-shrink-0 mt-0.5" />
+                  <span>"Qual a fatura do Nubank?"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#0A0F1C] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-orange-500 flex-shrink-0 mt-0.5" />
+                  <span>"Valor da fatura de dezembro"</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-semibold text-green-400 text-sm">Por Categoria:</h4>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#0A0F1C] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>"Quanto gastei com alimentação este mês?"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#0A0F1C] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span>"Gastos com transporte em novembro"</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-semibold text-blue-400 text-sm">Projeções Futuras:</h4>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#0A0F1C] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <span>"Previsão de fluxo de caixa para os próximos 15 dias"</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-zinc-300 bg-[#0A0F1C] rounded px-3 py-2">
+                  <Send className="w-3 h-3 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <span>"Quais parcelas faltam do notebook?"</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Resources Available */}
