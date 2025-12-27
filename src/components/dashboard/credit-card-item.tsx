@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CreditCard as CreditCardIcon, Pencil, Trash2, ArrowRight } from "lucide-react";
+import { CreditCard as CreditCardIcon, Pencil, Trash2, ArrowRight, RotateCcw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/hooks/use-user";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import type { CreditCard } from "@/hooks/use-credit-cards";
 import { useLanguage } from "@/contexts/language-context";
@@ -11,10 +12,12 @@ import { useLanguage } from "@/contexts/language-context";
 interface CreditCardItemProps {
   card: CreditCard;
   onEdit: (card: CreditCard) => void;
+  onDelete: (card: CreditCard) => void;
+  onReactivate?: (card: CreditCard) => void;
   formatCurrency: (value: number) => string;
 }
 
-export function CreditCardItem({ card, onEdit, formatCurrency }: CreditCardItemProps) {
+export function CreditCardItem({ card, onEdit, onDelete, onReactivate, formatCurrency }: CreditCardItemProps) {
   const { t } = useLanguage();
   const { profile } = useUser();
   const [limiteUsado, setLimiteUsado] = useState(0);
@@ -66,12 +69,17 @@ export function CreditCardItem({ card, onEdit, formatCurrency }: CreditCardItemP
   const percentualUsado = card.limite_total > 0 ? (limiteUsado / card.limite_total) * 100 : 0;
 
   return (
-    <div className="bg-[#111827] border border-white/5 rounded-xl overflow-hidden hover:border-white/10 transition-all group">
+    <div className={cn(
+      "bg-[#111827] border rounded-xl overflow-hidden hover:border-white/10 transition-all group",
+      card.ativo ? "border-white/5" : "border-red-500/30 opacity-75"
+    )}>
       {/* Card Visual */}
       <div
         className="h-48 p-6 relative overflow-hidden"
         style={{
-          background: `linear-gradient(135deg, ${card.cor_cartao} 0%, ${card.cor_cartao}dd 100%)`,
+          background: card.ativo 
+            ? `linear-gradient(135deg, ${card.cor_cartao} 0%, ${card.cor_cartao}dd 100%)`
+            : `linear-gradient(135deg, #4B5563 0%, #374151 100%)`,
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
@@ -80,6 +88,11 @@ export function CreditCardItem({ card, onEdit, formatCurrency }: CreditCardItemP
             <div>
               <p className="text-white/80 text-xs font-medium mb-1">{card.bandeira}</p>
               <p className="text-white text-lg font-bold">{card.nome}</p>
+              {!card.ativo && (
+                <span className="inline-block mt-2 px-2 py-1 bg-red-500/20 border border-red-500/30 rounded text-xs text-red-400 font-semibold">
+                  INATIVO
+                </span>
+              )}
             </div>
             <CreditCardIcon className="w-8 h-8 text-white/40" />
           </div>
@@ -147,20 +160,48 @@ export function CreditCardItem({ card, onEdit, formatCurrency }: CreditCardItemP
 
         {/* Actions */}
         <div className="flex gap-2 pt-4">
-          <Link
-            href={`/dashboard/cartoes/${card.id}`}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium"
-          >
-            {t('cards.invoiceDetails')}
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <button
-            onClick={() => onEdit(card)}
-            className="p-2 hover:bg-white/5 text-zinc-400 hover:text-white rounded-lg transition-colors"
-            title={t('cards.editCard')}
-          >
-            <Pencil className="w-4 h-4" />
-          </button>
+          {card.ativo ? (
+            <>
+              <Link
+                href={`/dashboard/cartoes/${card.id}`}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                {t('cards.invoiceDetails')}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <button
+                onClick={() => onEdit(card)}
+                className="p-2 hover:bg-white/5 text-zinc-400 hover:text-white rounded-lg transition-colors"
+                title={t('cards.editCard')}
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(card)}
+                className="p-2 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 rounded-lg transition-colors"
+                title="Excluir ou Inativar"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => onReactivate?.(card)}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reativar Cartão
+              </button>
+              <button
+                onClick={() => onDelete(card)}
+                className="p-2 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 rounded-lg transition-colors"
+                title="Excluir"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

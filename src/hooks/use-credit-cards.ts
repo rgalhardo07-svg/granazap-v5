@@ -24,36 +24,40 @@ export interface CreditCard {
 }
 
 async function fetchCreditCards(
-  accountFilter: 'pessoal' | 'pj'
+  accountFilter: 'pessoal' | 'pj',
+  showInactive: boolean = false
 ): Promise<CreditCard[]> {
   const supabase = createClient();
 
-
-  const { data, error } = await supabase
+  let query = supabase
     .from('cartoes_credito')
     .select('*')
-    .eq('tipo_conta', accountFilter)
-    .eq('ativo', true)
-    .order('created_at', { ascending: false });
+    .eq('tipo_conta', accountFilter);
 
+  // Se não mostrar inativos, filtrar apenas ativos
+  if (!showInactive) {
+    query = query.eq('ativo', true);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) throw error;
 
   return data || [];
 }
 
-export function useCreditCards() {
+export function useCreditCards(showInactive: boolean = false) {
   const { user } = useUser();
   const { filter: accountFilter } = useAccountFilter();
   const queryClient = useQueryClient();
 
-  const queryKey = ['credit-cards', accountFilter];
+  const queryKey = ['credit-cards', accountFilter, showInactive];
 
   const query = useQuery({
     queryKey,
     queryFn: () => {
       if (!user) throw new Error('User not authenticated');
-      return fetchCreditCards(accountFilter);
+      return fetchCreditCards(accountFilter, showInactive);
     },
     enabled: !!user,
   });

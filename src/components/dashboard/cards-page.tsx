@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, CreditCard as CreditCardIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, CreditCard as CreditCardIcon, Eye, EyeOff } from "lucide-react";
 import { useCreditCards } from "@/hooks/use-credit-cards";
 import { useAccountFilter } from "@/hooks/use-account-filter";
+import { createClient } from "@/lib/supabase/client";
 import { CreditCardModal } from "./credit-card-modal";
 import { CreditCardItem } from "./credit-card-item";
+import { DeleteCardModal } from "./delete-card-modal";
 import { cn } from "@/lib/utils";
 import type { CreditCard } from "@/hooks/use-credit-cards";
 import { useLanguage } from "@/contexts/language-context";
@@ -17,9 +19,13 @@ export function CardsPage() {
   const { t, language } = useLanguage();
   const { formatCurrency: formatCurrencyFromContext } = useCurrency();
   const { filter: accountFilter } = useAccountFilter();
-  const { cards, loading } = useCreditCards();
+  const [showInactive, setShowInactive] = useState(false);
+  const { cards, loading } = useCreditCards(showInactive);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cardToEdit, setCardToEdit] = useState<CreditCard | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState<CreditCard | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const locales = {
     pt: 'pt-BR',
@@ -37,15 +43,52 @@ export function CardsPage() {
     setIsModalOpen(true);
   };
 
+  const handleDelete = (card: CreditCard) => {
+    setCardToDelete(card);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleReactivate = async (card: CreditCard) => {
+    try {
+      const supabase = createClient();
+      
+      const { error } = await supabase
+        .from('cartoes_credito')
+        .update({ ativo: true })
+        .eq('id', card.id);
+
+      if (error) throw error;
+
+      // Disparar evento para atualizar lista
+      window.dispatchEvent(new Event('creditCardsChanged'));
+    } catch (error) {
+      console.error('Error reactivating card:', error);
+    }
+  };
+
   const handleSuccess = () => {
     setIsModalOpen(false);
     setCardToEdit(null);
+  };
+
+  const handleDeleteSuccess = () => {
+    setIsDeleteModalOpen(false);
+    setCardToDelete(null);
   };
 
   const handleClose = () => {
     setIsModalOpen(false);
     setCardToEdit(null);
   };
+
+  const handleDeleteClose = () => {
+    setIsDeleteModalOpen(false);
+    setCardToDelete(null);
+  };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const formatCurrency = formatCurrencyFromContext;
 
@@ -69,18 +112,35 @@ export function CardsPage() {
             {t('cards.description')}
           </p>
         </div>
-        <button
-          onClick={handleAddNew}
-          className="flex items-center gap-2 px-4 py-2 min-h-[44px] bg-purple-500 hover:bg-purple-600 active:scale-95 text-white rounded-lg transition-all font-medium text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">{t('cards.newCard')}</span>
-          <span className="sm:hidden">{t('cards.new')}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowInactive(!showInactive)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg transition-all font-medium text-sm border",
+              showInactive
+                ? "bg-zinc-700 border-zinc-600 text-white"
+                : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10"
+            )}
+            title={showInactive ? "Ocultar inativos" : "Mostrar inativos"}
+          >
+            {showInactive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            <span className="hidden sm:inline">
+              {showInactive ? "Mostrando inativos" : "Apenas ativos"}
+            </span>
+          </button>
+          <button
+            onClick={handleAddNew}
+            className="flex items-center gap-2 px-4 py-2 min-h-[44px] bg-purple-500 hover:bg-purple-600 active:scale-95 text-white rounded-lg transition-all font-medium text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('cards.newCard')}</span>
+            <span className="sm:hidden">{t('cards.new')}</span>
+          </button>
+        </div>
       </div>
 
       {/* Cards Grid */}
-      {loading ? (
+      {!mounted || loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="animate-pulse bg-[#111827] border border-white/5 rounded-xl h-80" />
@@ -126,6 +186,8 @@ export function CardsPage() {
                 key={card.id}
                 card={card}
                 onEdit={handleEdit}
+                onDelete={handleDelete}
+                onReactivate={handleReactivate}
                 formatCurrency={formatCurrency}
               />
             ))}
@@ -139,6 +201,14 @@ export function CardsPage() {
         onClose={handleClose}
         onSuccess={handleSuccess}
         cardToEdit={cardToEdit}
+      />
+
+      {/* Delete Modal */}
+      <DeleteCardModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleDeleteClose}
+        onSuccess={handleDeleteSuccess}
+        card={cardToDelete}
       />
     </div>
   );
