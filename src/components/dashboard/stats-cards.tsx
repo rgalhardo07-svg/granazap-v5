@@ -192,7 +192,7 @@ export function StatsCards() {
           <p className="text-xs md:text-sm text-zinc-400 mb-2 line-clamp-2">{stat.title}</p>
 
           {/* Value */}
-          <p className="text-lg md:text-xl xl:text-2xl font-bold font-mono mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{stat.value}</p>
+          <p className="text-base md:text-lg xl:text-xl font-bold font-mono mb-1 whitespace-nowrap overflow-hidden text-ellipsis">{stat.value}</p>
 
           {/* Count */}
           {stat.count && (
@@ -213,7 +213,7 @@ export function StatsCards() {
             </div>
             <div>
               <p className="text-xs md:text-sm text-zinc-400 mb-1">{savingsCard.title}</p>
-              <p className="text-2xl md:text-3xl font-bold font-mono">{savingsCard.value}</p>
+              <p className="text-xl md:text-2xl font-bold font-mono">{savingsCard.value}</p>
             </div>
           </div>
 
