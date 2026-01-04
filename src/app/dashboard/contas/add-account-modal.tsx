@@ -30,6 +30,25 @@ export function AddAccountModal({ isOpen, onClose, onSuccess }: AddAccountModalP
     is_default: false
   });
 
+  const formatCurrencyInput = (value: string) => {
+    // Remove tudo exceto números
+    const numbers = value.replace(/\D/g, '');
+    
+    // Converte para número e divide por 100 para ter os centavos
+    const amount = parseFloat(numbers) / 100;
+    
+    // Formata no padrão brasileiro
+    return amount.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCurrencyInput(e.target.value);
+    setFormData({...formData, saldo_atual: formatted});
+  };
+
   // Reset feedback ao abrir
   useEffect(() => {
     if (isOpen) {
@@ -49,10 +68,14 @@ export function AddAccountModal({ isOpen, onClose, onSuccess }: AddAccountModalP
     setFeedback(null);
 
     try {
+      // Parse o valor formatado: remove pontos (separador de milhar) e substitui vírgula por ponto
+      const valorLimpo = formData.saldo_atual.replace(/\./g, '').replace(',', '.');
+      const saldoNumerico = parseFloat(valorLimpo) || 0;
+      
       await createAccount({
         nome: formData.nome,
         banco: formData.banco || undefined,
-        saldo_atual: parseFloat(formData.saldo_atual.replace(getCurrencySymbol(), '').replace(/\./g, '').replace(',', '.')) || 0,
+        saldo_atual: saldoNumerico,
         is_default: formData.is_default
       });
 
@@ -179,11 +202,11 @@ export function AddAccountModal({ isOpen, onClose, onSuccess }: AddAccountModalP
                 <span className="text-sm font-semibold">{getCurrencySymbol()}</span>
               </div>
               <input
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="numeric"
                 placeholder="0,00"
                 value={formData.saldo_atual}
-                onChange={e => setFormData({...formData, saldo_atual: e.target.value})}
+                onChange={handleCurrencyChange}
                 className="w-full bg-[#0A0F1C] border border-white/10 rounded-lg pl-9 pr-3 h-10 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
               />
             </div>
