@@ -295,19 +295,32 @@ export function FutureTransactionsPage() {
   return (
     <div className="space-y-3 md:space-y-6 pb-20 md:pb-0">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <h1 className="text-xl md:text-2xl font-bold text-white">{t('future.title')}</h1>
           <p className="text-zinc-400 text-xs md:text-sm mt-1">
             {t('future.subtitle')}
           </p>
         </div>
-        {isRefetching && (
-          <div className="flex items-center gap-2 text-xs text-zinc-500">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            <span className="hidden sm:inline">{t('common.updating')}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {isRefetching && (
+            <div className="flex items-center gap-2 text-xs text-zinc-500">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span className="hidden sm:inline">{t('common.updating')}</span>
+            </div>
+          )}
+          <button
+            onClick={() => {
+              setSelectedTransaction(null);
+              setModalType('saida');
+              setIsCreateModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-4 h-10 bg-[#22C55E] hover:bg-[#16A34A] text-white rounded-lg font-medium transition-colors shadow-lg shadow-[#22C55E]/20"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="hidden sm:inline">Nova</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
