@@ -34,6 +34,10 @@ export function CardDetailsPage({ cardId }: CardDetailsPageProps) {
   
   // Controle de mês selecionado
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  
+  // Controle de pagamento parcial (NOVO - não afeta funcionalidade existente)
+  const [paymentMode, setPaymentMode] = useState<'total' | 'partial'>('total');
+  const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
   const { invoice, loading: invoiceLoading, refetch: refetchInvoice } = useCardInvoice(cardId, selectedMonth);
 
   useEffect(() => {
@@ -96,6 +100,39 @@ export function CardDetailsPage({ cardId }: CardDetailsPageProps) {
     const currentMonth = new Date().toISOString().slice(0, 7);
     return selectedMonth === currentMonth;
   };
+
+  // Funções para pagamento parcial (NOVO)
+  const handleToggleItemSelection = (itemId: number) => {
+    setSelectedItemIds(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (!invoice) return;
+    const pendingIds = invoice.items
+      .filter(item => item.status === 'pendente')
+      .map(item => item.id);
+    setSelectedItemIds(pendingIds);
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedItemIds([]);
+  };
+
+  const calculateSelectedTotal = () => {
+    if (!invoice) return 0;
+    return invoice.items
+      .filter(item => selectedItemIds.includes(item.id))
+      .reduce((sum, item) => sum + Number(item.valor), 0);
+  };
+
+  // Resetar seleção ao trocar de modo ou mês
+  useEffect(() => {
+    setSelectedItemIds([]);
+  }, [paymentMode, selectedMonth]);
 
   const handleExportInvoice = async () => {
     if (!invoice || !card) return;
@@ -452,7 +489,69 @@ export function CardDetailsPage({ cardId }: CardDetailsPageProps) {
 
           {/* Lista de Despesas */}
           <div>
-            <h3 className="text-sm font-semibold text-white mb-4">{t('cardDetails.expenses')}</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-white">{t('cardDetails.expenses')}</h3>
+              
+              {/* Toggle de Modo de Pagamento (NOVO) */}
+              {invoice && invoice.pendingCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPaymentMode('total')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      paymentMode === 'total'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white/5 text-zinc-400 hover:bg-white/10'
+                    }`}
+                  >
+                    Pagar Tudo
+                  </button>
+                  <button
+                    onClick={() => setPaymentMode('partial')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      paymentMode === 'partial'
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-white/5 text-zinc-400 hover:bg-white/10'
+                    }`}
+                  >
+                    Pagamento Parcial
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {/* Contador e ações de seleção (NOVO - apenas modo parcial) */}
+            {paymentMode === 'partial' && invoice && invoice.pendingCount > 0 && (
+              <div className="mb-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-purple-300">
+                      {selectedItemIds.length} de {invoice.pendingCount} selecionado(s)
+                    </span>
+                    {selectedItemIds.length > 0 && (
+                      <span className="text-sm font-bold text-purple-400">
+                        • {formatCurrency(calculateSelectedTotal())}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleSelectAll}
+                      className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                    >
+                      Selecionar Todos
+                    </button>
+                    {selectedItemIds.length > 0 && (
+                      <button
+                        onClick={handleDeselectAll}
+                        className="text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
+                      >
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             
             {invoiceLoading ? (
               <div className="space-y-3">
@@ -476,10 +575,24 @@ export function CardDetailsPage({ cardId }: CardDetailsPageProps) {
                     className={`bg-[#0A0F1C] border rounded-lg p-4 transition-colors ${
                       item.status === 'pago' 
                         ? 'border-green-500/20 opacity-60' 
+                        : selectedItemIds.includes(item.id)
+                        ? 'border-purple-500/50 bg-purple-500/5'
                         : 'border-white/5 hover:border-white/10'
                     }`}
                   >
                     <div className="flex items-center justify-between">
+                      {/* Checkbox de seleção (NOVO - apenas modo parcial e pendentes) */}
+                      {paymentMode === 'partial' && item.status === 'pendente' && (
+                        <div className="mr-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedItemIds.includes(item.id)}
+                            onChange={() => handleToggleItemSelection(item.id)}
+                            className="w-4 h-4 rounded border-white/20 bg-white/5 text-purple-500 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer"
+                          />
+                        </div>
+                      )}
+                      
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <p className="text-white font-medium">{item.descricao}</p>
@@ -583,13 +696,23 @@ export function CardDetailsPage({ cardId }: CardDetailsPageProps) {
                     {t('future.reversePayment')}
                   </button>
                 </div>
-              ) : invoice.total > 0 ? (
-                // Fatura Pendente - Botão de pagar
+              ) : invoice.total > 0 || (paymentMode === 'partial' && selectedItemIds.length > 0) ? (
+                // Fatura Pendente - Botão de pagar (modo total ou parcial)
                 <button
                   onClick={() => setIsPayModalOpen(true)}
-                  className="w-full px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+                  disabled={paymentMode === 'partial' && selectedItemIds.length === 0}
+                  className={`w-full px-6 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2 ${
+                    paymentMode === 'partial'
+                      ? 'bg-purple-500 hover:bg-purple-600 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                      : 'bg-green-500 hover:bg-green-600 text-white'
+                  }`}
                 >
-                  {isInvoiceClosed() ? (
+                  {paymentMode === 'partial' ? (
+                    <>
+                      <DollarSign className="w-5 h-5" />
+                      Pagar Selecionados ({selectedItemIds.length}) - {formatCurrency(calculateSelectedTotal())}
+                    </>
+                  ) : isInvoiceClosed() ? (
                     <>
                       <DollarSign className="w-5 h-5" />
                       {t('cardDetails.payInvoice')} - {formatCurrency(invoice.total)}
@@ -616,9 +739,11 @@ export function CardDetailsPage({ cardId }: CardDetailsPageProps) {
           refetchInvoice();
         }}
         card={card}
-        invoiceTotal={invoice?.total || 0}
+        invoiceTotal={paymentMode === 'partial' ? calculateSelectedTotal() : (invoice?.total || 0)}
         invoiceMonth={selectedMonth}
         isInvoiceClosed={isInvoiceClosed()}
+        paymentMode={paymentMode}
+        selectedItemIds={selectedItemIds}
       />
 
       {/* Modal de Reversão de Pagamento */}

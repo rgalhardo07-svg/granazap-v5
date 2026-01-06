@@ -114,8 +114,8 @@ export function ReversePaymentModal({
       }
 
       // 5. Deletar a transação de pagamento
+      // O trigger 'atualizar_saldo_conta' automaticamente estorna o saldo ao deletar
       if (transacao) {
-
         const { error: deleteError } = await supabase
           .from('transacoes')
           .delete()
@@ -124,21 +124,6 @@ export function ReversePaymentModal({
         if (deleteError) {
           throw new Error(`Erro ao deletar transação: ${deleteError.message}`);
         }
-      }
-
-      // 6. Estornar o valor na conta
-      const novoSaldo = conta.saldo_atual + totalPaid;
-
-      const { error: saldoError } = await supabase
-        .from('contas_bancarias')
-        .update({
-          saldo_atual: novoSaldo,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', contaId);
-
-      if (saldoError) {
-        throw new Error(`Erro ao estornar saldo: ${saldoError.message}`);
       }
 
       // Aguardar um momento para garantir que o banco commitou

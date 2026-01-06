@@ -19,6 +19,8 @@ interface PayInvoiceModalProps {
   invoiceTotal: number;
   invoiceMonth: string;
   isInvoiceClosed?: boolean;
+  paymentMode?: 'total' | 'partial'; // NOVO - opcional para compatibilidade
+  selectedItemIds?: number[]; // NOVO - opcional para compatibilidade
 }
 
 export function PayInvoiceModal({
@@ -29,6 +31,8 @@ export function PayInvoiceModal({
   invoiceTotal,
   invoiceMonth,
   isInvoiceClosed = true,
+  paymentMode = 'total', // NOVO - padrão 'total' para compatibilidade
+  selectedItemIds = [], // NOVO - padrão vazio para compatibilidade
 }: PayInvoiceModalProps) {
   const { t, language } = useLanguage();
   const { formatCurrency: formatCurrencyFromContext } = useCurrency();
@@ -92,15 +96,29 @@ export function PayInvoiceModal({
     try {
       const supabase = createClient();
 
-      // 🔒 SEGURANÇA: Usar função RPC atômica que valida saldo, cria transação e marca lançamentos
+      // 🔒 SEGURANÇA: Escolher RPC baseada no modo de pagamento
+      const rpcFunction = paymentMode === 'partial' 
+        ? 'processar_pagamento_fatura_parcial'
+        : 'processar_pagamento_fatura_segura';
+      
+      const rpcParams = paymentMode === 'partial'
+        ? {
+            p_cartao_id: card.id,
+            p_conta_id: contaId,
+            p_data_pagamento: dataPagamento,
+            p_tipo_conta: accountFilter,
+            p_lancamento_ids: selectedItemIds // Array de IDs selecionados
+          }
+        : {
+            p_cartao_id: card.id,
+            p_conta_id: contaId,
+            p_mes_fatura: invoiceMonth,
+            p_data_pagamento: dataPagamento,
+            p_tipo_conta: accountFilter
+          };
+      
       const { data: resultado, error: pagamentoError } = await supabase
-        .rpc('processar_pagamento_fatura_segura', {
-          p_cartao_id: card.id,
-          p_conta_id: contaId,
-          p_mes_fatura: invoiceMonth,
-          p_data_pagamento: dataPagamento,
-          p_tipo_conta: accountFilter
-        });
+        .rpc(rpcFunction, rpcParams);
 
       if (pagamentoError) {
         throw new Error(`Erro ao processar pagamento: ${pagamentoError.message}`);
@@ -261,7 +279,9 @@ export function PayInvoiceModal({
                   </span>
                 </div>
                 <div className="pt-2 border-t border-white/10 flex justify-between items-center">
-                  <span className="text-sm font-semibold text-white">{t('invoice.total')}:</span>
+                  <span className="text-sm font-semibold text-white">
+                    {paymentMode === 'partial' ? 'Total Selecionado:' : t('invoice.total')}:
+                  </span>
                   <span className="text-xl font-bold text-green-400">{formatCurrency(invoiceTotal)}</span>
                 </div>
               </div>
@@ -271,11 +291,18 @@ export function PayInvoiceModal({
             <div>
               <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
                 <CreditCardIcon className="w-4 h-4 text-purple-400" />
-                {t('invoice.expenses')} ({invoice?.items.length || 0})
+                {paymentMode === 'partial' ? (
+                  <span>Despesas Selecionadas ({selectedItemIds.length})</span>
+                ) : (
+                  <span>{t('invoice.expenses')} ({invoice?.items.filter(item => item.status === 'pendente').length || 0})</span>
+                )}
               </h3>
               
               <div className="bg-[#0A0F1C] border border-white/5 rounded-lg divide-y divide-white/5 max-h-40 overflow-y-auto">
-                {invoice?.items.map((item, index) => (
+                {(paymentMode === 'partial' 
+                  ? invoice?.items.filter(item => selectedItemIds.includes(item.id))
+                  : invoice?.items.filter(item => item.status === 'pendente')
+                )?.map((item, index) => (
                   <div key={item.id} className="p-2.5 hover:bg-white/5 transition-colors">
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1 min-w-0">
@@ -326,7 +353,7 @@ export function PayInvoiceModal({
                   • {t('invoice.newBalance')}: <strong className="text-white">{formatCurrency((selectedAccount?.saldo_atual || 0) - invoiceTotal)}</strong>
                 </p>
                 <p className="leading-relaxed">
-                  • <strong className="text-white">{invoice?.items.length || 0}</strong> {t('invoice.expensesEffective')}
+                  • <strong className="text-white">{paymentMode === 'partial' ? selectedItemIds.length : (invoice?.items.length || 0)}</strong> {t('invoice.expensesEffective')}
                 </p>
                 <p className="leading-relaxed">
                   • {t('invoice.limitReleased')}

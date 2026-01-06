@@ -890,6 +890,329 @@ BEGIN
 END;
 $$;
 
+-- 4.15 Função: processar_pagamento_fatura_segura (CORRIGIDA)
+CREATE OR REPLACE FUNCTION processar_pagamento_fatura_segura(
+    p_cartao_id UUID,
+    p_conta_id UUID,
+    p_mes_fatura TEXT,
+    p_data_pagamento DATE,
+    p_tipo_conta TEXT
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_usuario_id INTEGER;
+    v_total_fatura NUMERIC := 0;
+    v_saldo_conta NUMERIC;
+    v_cartao_nome TEXT;
+    v_transacao_id INTEGER;
+    v_count_lancamentos INTEGER := 0;
+    v_categoria_id INTEGER;
+BEGIN
+    -- 1. Validar usuário
+    SELECT id INTO v_usuario_id
+    FROM usuarios
+    WHERE auth_user = auth.uid();
+    
+    IF v_usuario_id IS NULL THEN
+        RETURN json_build_object('success', false, 'error', 'Usuário não autenticado');
+    END IF;
+    
+    -- 2. Validar que cartão e conta pertencem ao usuário
+    IF NOT EXISTS (
+        SELECT 1 FROM cartoes_credito 
+        WHERE id = p_cartao_id AND usuario_id = auth.uid()
+    ) THEN
+        RETURN json_build_object('success', false, 'error', 'Cartão não pertence ao usuário');
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM contas_bancarias 
+        WHERE id = p_conta_id AND usuario_id = auth.uid()
+    ) THEN
+        RETURN json_build_object('success', false, 'error', 'Conta não pertence ao usuário');
+    END IF;
+    
+    -- 3. Calcular total da fatura
+    SELECT COALESCE(SUM(valor), 0), COUNT(*) 
+    INTO v_total_fatura, v_count_lancamentos
+    FROM lancamentos_futuros
+    WHERE cartao_id = p_cartao_id
+    AND mes_previsto = p_mes_fatura
+    AND status = 'pendente'
+    AND usuario_id = v_usuario_id;
+    
+    IF v_count_lancamentos = 0 THEN
+        RETURN json_build_object('success', false, 'error', 'Nenhum lançamento pendente encontrado');
+    END IF;
+    
+    -- 4. Validar saldo
+    SELECT saldo_atual INTO v_saldo_conta
+    FROM contas_bancarias
+    WHERE id = p_conta_id;
+    
+    IF v_saldo_conta < v_total_fatura THEN
+        RETURN json_build_object('success', false, 'error', 'Saldo insuficiente');
+    END IF;
+    
+    -- 5. Buscar nome do cartão
+    SELECT nome INTO v_cartao_nome
+    FROM cartoes_credito
+    WHERE id = p_cartao_id;
+    
+    -- 6. Buscar categoria apropriada (prioriza "Cartao" ou "Fatura")
+    SELECT id INTO v_categoria_id
+    FROM categoria_trasacoes
+    WHERE usuario_id = v_usuario_id
+    AND tipo_conta = p_tipo_conta
+    AND (tipo = 'saida' OR tipo = 'ambos')
+    ORDER BY 
+        CASE WHEN LOWER(descricao) LIKE '%cartao%' THEN 1
+             WHEN LOWER(descricao) LIKE '%fatura%' THEN 2
+             ELSE 3
+        END,
+        id
+    LIMIT 1;
+    
+    -- Se não encontrou, usar primeira categoria de saída
+    IF v_categoria_id IS NULL THEN
+        SELECT id INTO v_categoria_id
+        FROM categoria_trasacoes
+        WHERE (tipo = 'saida' OR tipo = 'ambos')
+        AND tipo_conta = p_tipo_conta
+        ORDER BY id
+        LIMIT 1;
+    END IF;
+    
+    -- Se ainda não encontrou, retornar erro
+    IF v_categoria_id IS NULL THEN
+        RETURN json_build_object('success', false, 'error', 'Nenhuma categoria de saída encontrada');
+    END IF;
+    
+    -- 7. Criar transação de pagamento
+    INSERT INTO transacoes (
+        usuario_id,
+        tipo_conta,
+        conta_id,
+        tipo,
+        valor,
+        descricao,
+        data,
+        mes,
+        cartao_id,
+        categoria_id
+    ) VALUES (
+        v_usuario_id,
+        p_tipo_conta,
+        p_conta_id,
+        'saida',
+        v_total_fatura,
+        'Pagamento Fatura ' || v_cartao_nome || ' - ' || p_mes_fatura,
+        p_data_pagamento,
+        TO_CHAR(p_data_pagamento, 'YYYY-MM'),
+        p_cartao_id,
+        v_categoria_id
+    ) RETURNING id INTO v_transacao_id;
+    
+    -- 8. Marcar lançamentos como pagos
+    UPDATE lancamentos_futuros
+    SET status = 'pago',
+        data_efetivacao = p_data_pagamento
+    WHERE cartao_id = p_cartao_id
+    AND mes_previsto = p_mes_fatura
+    AND status = 'pendente'
+    AND usuario_id = v_usuario_id;
+    
+    -- 9. Retornar sucesso
+    RETURN json_build_object(
+        'success', true,
+        'transacao_id', v_transacao_id,
+        'total_pago', v_total_fatura,
+        'lancamentos_pagos', v_count_lancamentos
+    );
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN json_build_object('success', false, 'error', SQLERRM);
+END;
+$$;
+
+COMMENT ON FUNCTION processar_pagamento_fatura_segura IS 'Processa pagamento TOTAL de fatura de cartão de crédito com categoria_id automática';
+
+-- 4.16 Função: processar_pagamento_fatura_parcial (NOVA)
+CREATE OR REPLACE FUNCTION processar_pagamento_fatura_parcial(
+    p_cartao_id UUID,
+    p_conta_id UUID,
+    p_data_pagamento DATE,
+    p_tipo_conta TEXT,
+    p_lancamento_ids INTEGER[]
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_usuario_id INTEGER;
+    v_total_pagar NUMERIC := 0;
+    v_saldo_conta NUMERIC;
+    v_cartao_nome TEXT;
+    v_transacao_id INTEGER;
+    v_count_lancamentos INTEGER := 0;
+    v_mes_fatura TEXT;
+    v_categoria_id INTEGER;
+BEGIN
+    -- 1. Validar usuário autenticado
+    SELECT id INTO v_usuario_id
+    FROM usuarios
+    WHERE auth_user = auth.uid();
+    
+    IF v_usuario_id IS NULL THEN
+        RETURN json_build_object('success', false, 'error', 'Usuário não autenticado');
+    END IF;
+    
+    -- 2. Validar que cartão pertence ao usuário
+    IF NOT EXISTS (
+        SELECT 1 FROM cartoes_credito 
+        WHERE id = p_cartao_id AND usuario_id = auth.uid()
+    ) THEN
+        RETURN json_build_object('success', false, 'error', 'Cartão não pertence ao usuário');
+    END IF;
+    
+    -- 3. Validar que conta pertence ao usuário
+    IF NOT EXISTS (
+        SELECT 1 FROM contas_bancarias 
+        WHERE id = p_conta_id AND usuario_id = auth.uid()
+    ) THEN
+        RETURN json_build_object('success', false, 'error', 'Conta não pertence ao usuário');
+    END IF;
+    
+    -- 4. Validar que array de IDs não está vazio
+    IF p_lancamento_ids IS NULL OR array_length(p_lancamento_ids, 1) IS NULL THEN
+        RETURN json_build_object('success', false, 'error', 'Nenhum lançamento selecionado');
+    END IF;
+    
+    -- 5. Calcular total APENAS dos lançamentos selecionados
+    SELECT 
+        COALESCE(SUM(valor), 0), 
+        COUNT(*),
+        MIN(mes_previsto)
+    INTO v_total_pagar, v_count_lancamentos, v_mes_fatura
+    FROM lancamentos_futuros
+    WHERE id = ANY(p_lancamento_ids)
+    AND cartao_id = p_cartao_id
+    AND status = 'pendente'
+    AND usuario_id = v_usuario_id;
+    
+    -- 6. Validar que encontrou lançamentos válidos
+    IF v_count_lancamentos = 0 THEN
+        RETURN json_build_object('success', false, 'error', 'Nenhum lançamento válido selecionado');
+    END IF;
+    
+    -- 7. Validar que todos os IDs fornecidos foram encontrados
+    IF v_count_lancamentos != array_length(p_lancamento_ids, 1) THEN
+        RETURN json_build_object(
+            'success', false, 
+            'error', 'Alguns lançamentos selecionados não existem ou já foram pagos'
+        );
+    END IF;
+    
+    -- 8. Validar saldo suficiente
+    SELECT saldo_atual INTO v_saldo_conta
+    FROM contas_bancarias
+    WHERE id = p_conta_id;
+    
+    IF v_saldo_conta < v_total_pagar THEN
+        RETURN json_build_object('success', false, 'error', 'Saldo insuficiente');
+    END IF;
+    
+    -- 9. Buscar nome do cartão
+    SELECT nome INTO v_cartao_nome
+    FROM cartoes_credito
+    WHERE id = p_cartao_id;
+    
+    -- 10. Buscar categoria apropriada
+    SELECT id INTO v_categoria_id
+    FROM categoria_trasacoes
+    WHERE usuario_id = v_usuario_id
+    AND tipo_conta = p_tipo_conta
+    AND (tipo = 'saida' OR tipo = 'ambos')
+    ORDER BY 
+        CASE WHEN LOWER(descricao) LIKE '%cartao%' THEN 1
+             WHEN LOWER(descricao) LIKE '%fatura%' THEN 2
+             ELSE 3
+        END,
+        id
+    LIMIT 1;
+    
+    IF v_categoria_id IS NULL THEN
+        SELECT id INTO v_categoria_id
+        FROM categoria_trasacoes
+        WHERE (tipo = 'saida' OR tipo = 'ambos')
+        AND tipo_conta = p_tipo_conta
+        ORDER BY id
+        LIMIT 1;
+    END IF;
+    
+    IF v_categoria_id IS NULL THEN
+        RETURN json_build_object('success', false, 'error', 'Nenhuma categoria de saída encontrada');
+    END IF;
+    
+    -- 11. Criar transação de pagamento parcial
+    INSERT INTO transacoes (
+        usuario_id,
+        tipo_conta,
+        conta_id,
+        tipo,
+        valor,
+        descricao,
+        data,
+        mes,
+        cartao_id,
+        categoria_id
+    ) VALUES (
+        v_usuario_id,
+        p_tipo_conta,
+        p_conta_id,
+        'saida',
+        v_total_pagar,
+        'Pagamento Parcial Fatura ' || v_cartao_nome || ' - ' || v_mes_fatura || ' (' || v_count_lancamentos || ' despesas)',
+        p_data_pagamento,
+        TO_CHAR(p_data_pagamento, 'YYYY-MM'),
+        p_cartao_id,
+        v_categoria_id
+    ) RETURNING id INTO v_transacao_id;
+    
+    -- 12. Marcar APENAS os lançamentos selecionados como pagos
+    UPDATE lancamentos_futuros
+    SET status = 'pago',
+        data_efetivacao = p_data_pagamento,
+        transacao_id = v_transacao_id
+    WHERE id = ANY(p_lancamento_ids)
+    AND cartao_id = p_cartao_id
+    AND status = 'pendente'
+    AND usuario_id = v_usuario_id;
+    
+    -- 13. Retornar sucesso com detalhes
+    RETURN json_build_object(
+        'success', true,
+        'transacao_id', v_transacao_id,
+        'total_pago', v_total_pagar,
+        'lancamentos_pagos', v_count_lancamentos,
+        'mes_fatura', v_mes_fatura
+    );
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN json_build_object('success', false, 'error', SQLERRM);
+END;
+$$;
+
+COMMENT ON FUNCTION processar_pagamento_fatura_parcial IS 'Processa pagamento PARCIAL de fatura de cartão de crédito (despesas selecionadas)';
+
 -- =====================================================
 -- 5. NOVOS TRIGGERS (não existem no setup.sql)
 -- =====================================================
@@ -1418,7 +1741,7 @@ COMMENT ON COLUMN configuracoes_sistema.whatsapp_suporte_url IS 'URL do WhatsApp
 -- 📊 RESUMO DAS MUDANÇAS:
 -- ✅ 36 novas colunas em tabelas existentes (lancamentos_futuros: tipo_conta, conta_id | configuracoes_sistema: 13 novas colunas)
 -- ✅ 8 novas tabelas completas
--- ✅ 18 novas funções SQL (incluindo sync_user_id, auto_set_plano_id e verificar_proprietario_por_auth)
+-- ✅ 20 novas funções SQL (incluindo sync_user_id, auto_set_plano_id, processar_pagamento_fatura_segura e processar_pagamento_fatura_parcial)
 -- ✅ 14 novos triggers (incluindo sync user_id e auto plano_id)
 -- ✅ 3 novas views
 -- ✅ 55 novos índices (incluindo user_id indexes e lancamentos_futuros indexes)
@@ -1438,6 +1761,7 @@ COMMENT ON COLUMN configuracoes_sistema.whatsapp_suporte_url IS 'URL do WhatsApp
 -- ✅ Atualização Automática de Preços
 -- ✅ Auto-vinculação de plano_id em cadastro de usuários
 -- ✅ Sistema de Bloqueio de Assinatura (3 níveis: aviso, soft-block, hard-block)
+-- ✅ Pagamento de Fatura de Cartão (Total e Parcial com categoria_id automática)
 -- 
 -- 🔐 SEGURANÇA:
 -- ✅ RLS habilitado em todas as novas tabelas
