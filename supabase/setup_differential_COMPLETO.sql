@@ -51,9 +51,9 @@ ADD COLUMN IF NOT EXISTS keywords TEXT[] DEFAULT '{}';
 COMMENT ON COLUMN categoria_trasacoes.keywords IS 'Keywords for AI-powered category identification';
 
 -- 2.3 Tabela: transacoes
--- Colunas para Modo PJ, Transferências, Contas Bancárias e Cartões
+-- Colunas para Modo PJ, Transferências e Dependentes (SEM foreign keys para tabelas que ainda não existem)
 ALTER TABLE transacoes 
-ADD COLUMN IF NOT EXISTS dependente_id INTEGER REFERENCES usuarios_dependentes(id) ON DELETE SET NULL;
+ADD COLUMN IF NOT EXISTS dependente_id INTEGER;
 
 ALTER TABLE transacoes 
 ADD COLUMN IF NOT EXISTS tipo_conta TEXT DEFAULT 'pessoal' CHECK (tipo_conta IN ('pessoal', 'pj'));
@@ -62,13 +62,13 @@ ALTER TABLE transacoes
 ADD COLUMN IF NOT EXISTS is_transferencia BOOLEAN DEFAULT false;
 
 ALTER TABLE transacoes 
-ADD COLUMN IF NOT EXISTS conta_id UUID REFERENCES contas_bancarias(id) ON DELETE SET NULL;
+ADD COLUMN IF NOT EXISTS conta_id UUID;
 
 ALTER TABLE transacoes 
-ADD COLUMN IF NOT EXISTS cartao_id UUID REFERENCES cartoes_credito(id) ON DELETE SET NULL;
+ADD COLUMN IF NOT EXISTS cartao_id UUID;
 
 ALTER TABLE transacoes 
-ADD COLUMN IF NOT EXISTS conta_destino_id UUID REFERENCES contas_bancarias(id) ON DELETE SET NULL;
+ADD COLUMN IF NOT EXISTS conta_destino_id UUID;
 
 COMMENT ON COLUMN transacoes.conta_destino_id IS 'Conta bancária de destino (usado em transferências entre contas)';
 
@@ -90,9 +90,9 @@ COMMENT ON COLUMN transacoes.conta_id IS 'Conta bancária de origem da transaç�
 COMMENT ON COLUMN transacoes.cartao_id IS 'Cartão de crédito usado na transação (se aplicável)';
 
 -- 2.4 Tabela: lancamentos_futuros
--- Colunas para Recorrentes, Dependentes e Cartões
+-- Colunas para Recorrentes, Dependentes e Cartões (SEM foreign keys para tabelas que ainda não existem)
 ALTER TABLE lancamentos_futuros 
-ADD COLUMN IF NOT EXISTS dependente_id INTEGER REFERENCES usuarios_dependentes(id) ON DELETE SET NULL;
+ADD COLUMN IF NOT EXISTS dependente_id INTEGER;
 
 ALTER TABLE lancamentos_futuros 
 ADD COLUMN IF NOT EXISTS data_final DATE DEFAULT NULL;
@@ -101,7 +101,7 @@ ALTER TABLE lancamentos_futuros
 ADD COLUMN IF NOT EXISTS confirmed_dates TEXT DEFAULT NULL;
 
 ALTER TABLE lancamentos_futuros 
-ADD COLUMN IF NOT EXISTS cartao_id UUID REFERENCES cartoes_credito(id) ON DELETE SET NULL;
+ADD COLUMN IF NOT EXISTS cartao_id UUID;
 
 ALTER TABLE lancamentos_futuros 
 ADD COLUMN IF NOT EXISTS parcela_info JSONB DEFAULT NULL;
@@ -110,7 +110,7 @@ ALTER TABLE lancamentos_futuros
 ADD COLUMN IF NOT EXISTS tipo_conta TEXT DEFAULT 'pessoal' CHECK (tipo_conta IN ('pessoal', 'pj'));
 
 ALTER TABLE lancamentos_futuros 
-ADD COLUMN IF NOT EXISTS conta_id UUID REFERENCES contas_bancarias(id) ON DELETE SET NULL;
+ADD COLUMN IF NOT EXISTS conta_id UUID;
 
 COMMENT ON COLUMN lancamentos_futuros.dependente_id IS 'ID do dependente que criou o lançamento futuro. NULL = lançamento do usuário principal';
 COMMENT ON COLUMN lancamentos_futuros.data_final IS 'Data final opcional para lançamentos recorrentes. NULL = recorrente indefinido (comportamento atual mantido)';
@@ -365,6 +365,40 @@ COMMENT ON TABLE usuarios_dependentes IS 'Usuários dependentes vinculados a um 
 COMMENT ON COLUMN usuarios_dependentes.usuario_principal_id IS 'ID do usuário principal (titular do plano) ao qual este dependente pertence';
 COMMENT ON COLUMN usuarios_dependentes.auth_user_id IS 'UUID do auth.users se o dependente tiver login próprio';
 COMMENT ON COLUMN usuarios_dependentes.permissoes IS 'Permissões do dependente em formato JSON';
+
+-- =====================================================
+-- 3.9 ADICIONAR FOREIGN KEYS (após criação das tabelas)
+-- =====================================================
+
+-- Foreign keys para transacoes
+ALTER TABLE transacoes 
+ADD CONSTRAINT IF NOT EXISTS fk_transacoes_dependente 
+FOREIGN KEY (dependente_id) REFERENCES usuarios_dependentes(id) ON DELETE SET NULL;
+
+ALTER TABLE transacoes 
+ADD CONSTRAINT IF NOT EXISTS fk_transacoes_conta 
+FOREIGN KEY (conta_id) REFERENCES contas_bancarias(id) ON DELETE SET NULL;
+
+ALTER TABLE transacoes 
+ADD CONSTRAINT IF NOT EXISTS fk_transacoes_cartao 
+FOREIGN KEY (cartao_id) REFERENCES cartoes_credito(id) ON DELETE SET NULL;
+
+ALTER TABLE transacoes 
+ADD CONSTRAINT IF NOT EXISTS fk_transacoes_conta_destino 
+FOREIGN KEY (conta_destino_id) REFERENCES contas_bancarias(id) ON DELETE SET NULL;
+
+-- Foreign keys para lancamentos_futuros
+ALTER TABLE lancamentos_futuros 
+ADD CONSTRAINT IF NOT EXISTS fk_lancamentos_dependente 
+FOREIGN KEY (dependente_id) REFERENCES usuarios_dependentes(id) ON DELETE SET NULL;
+
+ALTER TABLE lancamentos_futuros 
+ADD CONSTRAINT IF NOT EXISTS fk_lancamentos_cartao 
+FOREIGN KEY (cartao_id) REFERENCES cartoes_credito(id) ON DELETE SET NULL;
+
+ALTER TABLE lancamentos_futuros 
+ADD CONSTRAINT IF NOT EXISTS fk_lancamentos_conta 
+FOREIGN KEY (conta_id) REFERENCES contas_bancarias(id) ON DELETE SET NULL;
 
 -- =====================================================
 -- 4. NOVAS FUNÇÕES SQL (não existem no setup.sql)
@@ -2199,35 +2233,32 @@ CREATE POLICY "dependentes_delete_policy" ON usuarios_dependentes
 -- ⚠️ IMPORTANTE: Os Cron Jobs devem ser criados via SQL direto no Supabase
 -- pois requerem permissões especiais. Aqui está a documentação:
 
-/*
+-- =====================================================
+-- NOTA: Cron Jobs devem ser criados manualmente no Supabase Dashboard
+-- pois requerem permissões especiais e não podem ser executados via SQL direto.
+-- 
 -- 9.1 Cron Job: Atualizar preços de investimentos (Mercado)
--- Executa: Segunda a Sexta, às 12h, 15h e 21h (horário de Brasília)
-SELECT cron.schedule(
-    'update-investment-prices-market',
-    '0 12,15,21 * * 1-5',
-    $$
-    SELECT net.http_post(
-        url := 'https://vrmickfxoxvyljounoxq.supabase.co/functions/v1/update-investment-prices',
-        headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
-        body := '{}'::jsonb
-    ) as request_id;
-    $$
-);
-
+-- Nome: update-investment-prices-market
+-- Schedule: 0 12,15,21 * * 1-5
+-- Descrição: Executa Segunda a Sexta, às 12h, 15h e 21h (horário de Brasília)
+-- Command:
+--   SELECT net.http_post(
+--       url := 'https://vrmickfxoxvyljounoxq.supabase.co/functions/v1/update-investment-prices',
+--       headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
+--       body := '{}'::jsonb
+--   ) as request_id;
+--
 -- 9.2 Cron Job: Atualizar preços de criptomoedas
--- Executa: A cada 4 horas, todos os dias
-SELECT cron.schedule(
-    'update-investment-prices-crypto',
-    '0 */4 * * *',
-    $$
-    SELECT net.http_post(
-        url := 'https://vrmickfxoxvyljounoxq.supabase.co/functions/v1/update-investment-prices',
-        headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
-        body := '{}'::jsonb
-    ) as request_id;
-    $$
-);
-*/
+-- Nome: update-investment-prices-crypto
+-- Schedule: 0 */4 * * *
+-- Descrição: Executa a cada 4 horas, todos os dias
+-- Command:
+--   SELECT net.http_post(
+--       url := 'https://vrmickfxoxvyljounoxq.supabase.co/functions/v1/update-investment-prices',
+--       headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
+--       body := '{}'::jsonb
+--   ) as request_id;
+-- =====================================================
 
 -- =====================================================
 -- 10. EDGE FUNCTIONS (Supabase Functions)
