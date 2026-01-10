@@ -9,7 +9,7 @@ import { useAccountFilter } from "./use-account-filter";
 export interface Category {
   id: number;
   descricao: string;
-  tipo: 'entrada' | 'saida';
+  tipo: 'entrada' | 'saida' | 'ambos';
   icon_key: string | null;
   usuario_id: number;
   tipo_conta: 'pessoal' | 'pj';

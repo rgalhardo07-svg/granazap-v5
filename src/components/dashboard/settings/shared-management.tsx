@@ -33,17 +33,19 @@ export function SharedManagement() {
   // Bloquear acesso para dependentes
   const isDependente = profile?.is_dependente === true;
   
-  // Limites baseados no plano real do usuário
-  // Se o backend enviar essa info no profile, melhor. Senão, inferimos.
-  // Como atualizei o banco, o plano 'Plano Anual' (trimestral) agora tem limite 5.
-  const maxDependentes = 5; // Valor padrão para planos pagos
-  const isPro = profile?.plano !== 'free' && profile?.plano !== null;
-  const userLimit = isPro ? maxDependentes : 1;
+  // Limites baseados no plano real do usuário (busca do banco)
+  const maxDependentes = profile?.max_usuarios_dependentes || 0;
+  const permiteCompartilhamento = profile?.permite_compartilhamento || false;
+  const userLimit = maxDependentes;
   const currentUsers = 1 + (members?.length || 0);
 
   const handleAddUser = () => {
+    if (!permiteCompartilhamento || maxDependentes === 0) {
+      alert("Seu plano não permite compartilhamento. Faça upgrade para adicionar colaboradores!");
+      return;
+    }
     if (currentUsers >= userLimit) {
-      alert("Faça upgrade para adicionar mais usuários!");
+      alert("Você atingiu o limite de colaboradores do seu plano. Faça upgrade para adicionar mais!");
       return;
     }
     setIsModalOpen(true);
@@ -348,7 +350,7 @@ export function SharedManagement() {
       </div>
 
       {/* Card de Upgrade para Usuários Free */}
-      {!isPro && (
+      {!permiteCompartilhamento && (
         <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/20 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
             <h4 className="text-lg font-semibold text-white flex items-center gap-2 justify-center md:justify-start">

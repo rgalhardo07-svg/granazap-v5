@@ -1615,75 +1615,18 @@ BEGIN
           AND convite_status = 'pendente';
         
         IF FOUND THEN
-            -- CENÁRIO 3A: É dependente com convite pendente - criar usuário vinculado ao principal
-            RAISE LOG 'Dependente encontrado, criando usuário vinculado ao principal';
+            -- CENÁRIO 3A: É dependente com convite pendente
+            -- CORREÇÃO: NÃO criar em usuarios, apenas vincular auth_user_id
+            RAISE LOG 'Dependente encontrado, vinculando auth_user_id';
             
-            -- Buscar plano do usuário principal
-            SELECT plano_id INTO plano_free_id
-            FROM public.usuarios
-            WHERE id = dependente_existente.usuario_principal_id;
+            UPDATE public.usuarios_dependentes
+            SET 
+                auth_user_id = NEW.id,
+                convite_status = 'aceito',
+                data_ultima_modificacao = NOW()
+            WHERE id = dependente_existente.id;
             
-            -- Extrair dados do raw_user_meta_data se disponível
-            DECLARE
-                nome_usuario TEXT;
-                telefone_usuario TEXT;
-            BEGIN
-                nome_usuario := COALESCE(
-                    NEW.raw_user_meta_data->>'name',
-                    NEW.raw_user_meta_data->>'full_name',
-                    dependente_existente.nome,
-                    SPLIT_PART(NEW.email, '@', 1)
-                );
-                
-                telefone_usuario := COALESCE(
-                    NEW.raw_user_meta_data->>'phone',
-                    NEW.raw_user_meta_data->>'phone_number',
-                    dependente_existente.telefone,
-                    ''
-                );
-                
-                -- Criar usuário na tabela usuarios vinculado ao plano do principal
-                INSERT INTO public.usuarios (
-                    nome,
-                    email,
-                    celular,
-                    aceite_termos,
-                    data_aceite_termos,
-                    auth_user,
-                    has_password,
-                    plano,
-                    plano_id,
-                    status,
-                    data_compra,
-                    data_final_plano,
-                    dias_restantes_free,
-                    data_ultimo_acesso,
-                    created_at,
-                    ultima_atualizacao
-                ) VALUES (
-                    nome_usuario,
-                    NEW.email,
-                    telefone_usuario,
-                    true,
-                    NOW(),
-                    NEW.id,
-                    true,
-                    'Compartilhado',
-                    plano_free_id,
-                    'ativo',
-                    NOW(),
-                    (SELECT data_final_plano FROM public.usuarios WHERE id = dependente_existente.usuario_principal_id),
-                    0,
-                    NOW(),
-                    NOW(),
-                    NOW()
-                );
-                
-                RAISE LOG 'Usuário dependente criado com sucesso: nome=%, email=%, plano_id=%', nome_usuario, NEW.email, plano_free_id;
-                
-            EXCEPTION WHEN OTHERS THEN
-                RAISE WARNING 'Erro ao criar usuário dependente: %', SQLERRM;
-            END;
+            RAISE LOG 'Dependente vinculado com sucesso: id=%, email=%', dependente_existente.id, NEW.email;
         ELSE
             -- CENÁRIO 3B: Modo restrito e não é dependente (não fazer nada)
             RAISE LOG 'Modo restrito: usuário não existe e não é dependente, signup falhará na validação';

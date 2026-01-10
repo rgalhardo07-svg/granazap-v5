@@ -18,6 +18,8 @@ export interface UserProfile {
   is_dependente?: boolean; // Indica se é usuário dependente
   usuario_principal_id?: number; // ID do usuário principal (se for dependente)
   dependente_id?: number; // ID na tabela usuarios_dependentes (se for dependente)
+  max_usuarios_dependentes?: number; // Limite de dependentes do plano
+  permite_compartilhamento?: boolean; // Se o plano permite compartilhamento
   [key: string]: any; // Permitir outras colunas do banco
 }
 
@@ -37,7 +39,13 @@ export function useUser() {
       // 2. Tentar buscar como usuário principal
       const { data: profileData, error: profileError } = await supabase
         .from('usuarios')
-        .select('*')
+        .select(`
+          *,
+          planos_sistema!plano_id (
+            max_usuarios_dependentes,
+            permite_compartilhamento
+          )
+        `)
         .eq('auth_user', authUser.id)
         .single();
 
@@ -47,7 +55,9 @@ export function useUser() {
           user: authUser,
           profile: {
             ...profileData,
-            is_dependente: false
+            is_dependente: false,
+            max_usuarios_dependentes: (profileData.planos_sistema as any)?.[0]?.max_usuarios_dependentes || 0,
+            permite_compartilhamento: (profileData.planos_sistema as any)?.[0]?.permite_compartilhamento || false
           } as UserProfile
         };
 
@@ -72,7 +82,15 @@ export function useUser() {
         // Buscar dados do usuário principal para herdar configurações
         const { data: principalData } = await supabase
           .from('usuarios')
-          .select('idioma, moeda, plano')
+          .select(`
+            idioma, 
+            moeda, 
+            plano,
+            planos_sistema!plano_id (
+              max_usuarios_dependentes,
+              permite_compartilhamento
+            )
+          `)
           .eq('id', dependenteData.usuario_principal_id)
           .single();
 
@@ -89,7 +107,9 @@ export function useUser() {
             plano: principalData?.plano,
             is_dependente: true,
             usuario_principal_id: dependenteData.usuario_principal_id,
-            dependente_id: dependenteData.id
+            dependente_id: dependenteData.id,
+            max_usuarios_dependentes: (principalData?.planos_sistema as any)?.[0]?.max_usuarios_dependentes || 0,
+            permite_compartilhamento: (principalData?.planos_sistema as any)?.[0]?.permite_compartilhamento || false
           } as UserProfile
         };
 

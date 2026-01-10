@@ -2240,6 +2240,7 @@ CREATE INDEX IF NOT EXISTS idx_planos_compartilhamento ON planos_sistema(permite
 -- =====================================================
 
 -- RLS para contas_bancarias
+-- ATUALIZADO: Permitir dependentes gerenciarem contas do principal
 ALTER TABLE contas_bancarias ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "contas_bancarias_select" ON contas_bancarias;
@@ -2248,18 +2249,71 @@ CREATE POLICY "contas_bancarias_select" ON contas_bancarias
 
 DROP POLICY IF EXISTS "contas_bancarias_insert" ON contas_bancarias;
 CREATE POLICY "contas_bancarias_insert" ON contas_bancarias
-    FOR INSERT WITH CHECK (usuario_id = auth.uid());
+    FOR INSERT WITH CHECK (
+        usuario_id = auth.uid()
+        OR usuario_id IN (
+            SELECT u.auth_user
+            FROM usuarios u
+            JOIN usuarios_dependentes d ON d.usuario_principal_id = u.id
+            WHERE d.auth_user_id = auth.uid()
+              AND d.status = 'ativo'
+              AND (
+                  (d.permissoes->>'pode_gerenciar_contas')::boolean = true
+                  OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+              )
+        )
+    );
 
 DROP POLICY IF EXISTS "contas_bancarias_update" ON contas_bancarias;
 CREATE POLICY "contas_bancarias_update" ON contas_bancarias
-    FOR UPDATE USING (usuario_id = auth.uid())
-    WITH CHECK (usuario_id = auth.uid());
+    FOR UPDATE USING (
+        usuario_id = auth.uid()
+        OR usuario_id IN (
+            SELECT u.auth_user
+            FROM usuarios u
+            JOIN usuarios_dependentes d ON d.usuario_principal_id = u.id
+            WHERE d.auth_user_id = auth.uid()
+              AND d.status = 'ativo'
+              AND (
+                  (d.permissoes->>'pode_gerenciar_contas')::boolean = true
+                  OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+              )
+        )
+    )
+    WITH CHECK (
+        usuario_id = auth.uid()
+        OR usuario_id IN (
+            SELECT u.auth_user
+            FROM usuarios u
+            JOIN usuarios_dependentes d ON d.usuario_principal_id = u.id
+            WHERE d.auth_user_id = auth.uid()
+              AND d.status = 'ativo'
+              AND (
+                  (d.permissoes->>'pode_gerenciar_contas')::boolean = true
+                  OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+              )
+        )
+    );
 
 DROP POLICY IF EXISTS "contas_bancarias_delete" ON contas_bancarias;
 CREATE POLICY "contas_bancarias_delete" ON contas_bancarias
-    FOR DELETE USING (usuario_id = auth.uid());
+    FOR DELETE USING (
+        usuario_id = auth.uid()
+        OR usuario_id IN (
+            SELECT u.auth_user
+            FROM usuarios u
+            JOIN usuarios_dependentes d ON d.usuario_principal_id = u.id
+            WHERE d.auth_user_id = auth.uid()
+              AND d.status = 'ativo'
+              AND (
+                  (d.permissoes->>'pode_gerenciar_contas')::boolean = true
+                  OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+              )
+        )
+    );
 
 -- RLS para cartoes_credito
+-- ATUALIZADO: Permitir dependentes gerenciarem cartões do principal
 ALTER TABLE cartoes_credito ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "cartoes_credito_select" ON cartoes_credito;
@@ -2268,16 +2322,68 @@ CREATE POLICY "cartoes_credito_select" ON cartoes_credito
 
 DROP POLICY IF EXISTS "cartoes_credito_insert" ON cartoes_credito;
 CREATE POLICY "cartoes_credito_insert" ON cartoes_credito
-    FOR INSERT WITH CHECK (usuario_id = auth.uid());
+    FOR INSERT WITH CHECK (
+        usuario_id = auth.uid()
+        OR usuario_id IN (
+            SELECT u.auth_user
+            FROM usuarios u
+            JOIN usuarios_dependentes d ON d.usuario_principal_id = u.id
+            WHERE d.auth_user_id = auth.uid()
+              AND d.status = 'ativo'
+              AND (
+                  (d.permissoes->>'pode_gerenciar_cartoes')::boolean = true
+                  OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+              )
+        )
+    );
 
 DROP POLICY IF EXISTS "cartoes_credito_update" ON cartoes_credito;
 CREATE POLICY "cartoes_credito_update" ON cartoes_credito
-    FOR UPDATE USING (usuario_id = auth.uid())
-    WITH CHECK (usuario_id = auth.uid());
+    FOR UPDATE USING (
+        usuario_id = auth.uid()
+        OR usuario_id IN (
+            SELECT u.auth_user
+            FROM usuarios u
+            JOIN usuarios_dependentes d ON d.usuario_principal_id = u.id
+            WHERE d.auth_user_id = auth.uid()
+              AND d.status = 'ativo'
+              AND (
+                  (d.permissoes->>'pode_gerenciar_cartoes')::boolean = true
+                  OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+              )
+        )
+    )
+    WITH CHECK (
+        usuario_id = auth.uid()
+        OR usuario_id IN (
+            SELECT u.auth_user
+            FROM usuarios u
+            JOIN usuarios_dependentes d ON d.usuario_principal_id = u.id
+            WHERE d.auth_user_id = auth.uid()
+              AND d.status = 'ativo'
+              AND (
+                  (d.permissoes->>'pode_gerenciar_cartoes')::boolean = true
+                  OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+              )
+        )
+    );
 
 DROP POLICY IF EXISTS "cartoes_credito_delete" ON cartoes_credito;
 CREATE POLICY "cartoes_credito_delete" ON cartoes_credito
-    FOR DELETE USING (usuario_id = auth.uid());
+    FOR DELETE USING (
+        usuario_id = auth.uid()
+        OR usuario_id IN (
+            SELECT u.auth_user
+            FROM usuarios u
+            JOIN usuarios_dependentes d ON d.usuario_principal_id = u.id
+            WHERE d.auth_user_id = auth.uid()
+              AND d.status = 'ativo'
+              AND (
+                  (d.permissoes->>'pode_gerenciar_cartoes')::boolean = true
+                  OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+              )
+        )
+    );
 
 -- RLS para investment_assets
 ALTER TABLE investment_assets ENABLE ROW LEVEL SECURITY;
@@ -2662,16 +2768,16 @@ COMMENT ON FUNCTION admin_get_system_stats() IS 'Retorna estatísticas completas
 --                     categorias com transações vinculadas.
 -- =====================================================
 
-CREATE OR REPLACE FUNCTION delete_category_safe(p_category_id INTEGER)
-RETURNS JSON
+CREATE OR REPLACE FUNCTION delete_category_safe(p_category_id integer)
+RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path TO 'public'
 AS $$
 DECLARE
   v_user_id INTEGER;
   v_transacoes_count INTEGER;
   v_lancamentos_count INTEGER;
-  v_result JSON;
 BEGIN
   -- Buscar o user_id da categoria para validar ownership
   SELECT usuario_id INTO v_user_id
@@ -2687,7 +2793,7 @@ BEGIN
   END IF;
 
   -- Verificar se o usuário autenticado é o dono da categoria
-  IF v_user_id != (SELECT id FROM usuarios WHERE auth_user_id = auth.uid()) THEN
+  IF v_user_id != (SELECT id FROM usuarios WHERE auth_user = auth.uid()) THEN
     RETURN json_build_object(
       'success', false,
       'error', 'Você não tem permissão para deletar esta categoria'
@@ -2727,7 +2833,199 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION delete_category_safe(INTEGER) IS 'Deleta uma categoria de forma segura, removendo vínculos de transações e lançamentos futuros antes da exclusão. Criada em 09/01/2025.';
+COMMENT ON FUNCTION delete_category_safe IS 'Deleta uma categoria de forma segura, verificando se não há transações ou metas vinculadas';
+
+-- 4.29 Função: verificar_meu_acesso (CORRIGIDA - 10/01/2026)
+-- Correção: Agora busca também em usuarios_dependentes para evitar bloqueio de dependentes
+CREATE OR REPLACE FUNCTION public.verificar_meu_acesso()
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+    user_id INTEGER;
+    acesso_info JSONB;
+    dias_restantes INTEGER;
+    tem_acesso BOOLEAN;
+    usuario_record RECORD;
+    plano_atual TEXT;
+    plano_nome_atual TEXT;
+    plano_detalhes JSONB;
+BEGIN
+    -- Buscar o ID numérico do usuário logado com informações do plano
+    SELECT 
+        u.id, 
+        u.status, 
+        u.plano as plano_legado, 
+        u.plano_id,
+        u.is_admin, 
+        u.data_final_plano,
+        p.nome::TEXT as plano_nome,
+        p.tipo_periodo,
+        p.valor,
+        p.recursos
+    INTO usuario_record
+    FROM public.usuarios u
+    LEFT JOIN public.planos_sistema p ON u.plano_id = p.id
+    WHERE u.auth_user = auth.uid();
+    
+    -- Se não encontrou em usuarios, verificar se é dependente
+    IF NOT FOUND THEN
+        -- Buscar dependente e dados do principal
+        SELECT 
+            u.id, 
+            u.status, 
+            u.plano as plano_legado, 
+            u.plano_id,
+            u.is_admin, 
+            u.data_final_plano,
+            p.nome::TEXT as plano_nome,
+            p.tipo_periodo,
+            p.valor,
+            p.recursos
+        INTO usuario_record
+        FROM public.usuarios_dependentes d
+        INNER JOIN public.usuarios u ON u.id = d.usuario_principal_id
+        LEFT JOIN public.planos_sistema p ON u.plano_id = p.id
+        WHERE d.auth_user_id = auth.uid()
+          AND d.status = 'ativo';
+        
+        -- Se ainda não encontrou, retornar erro
+        IF NOT FOUND THEN
+            RETURN jsonb_build_object(
+                'hasAccess', false,
+                'isAdmin', false,
+                'plan', null,
+                'planName', null,
+                'planDetails', null,
+                'daysRemaining', 0,
+                'needsUpgrade', true,
+                'isBlocked', true,
+                'dataFinalPlano', null,
+                'message', 'Usuário não encontrado'
+            );
+        END IF;
+    END IF;
+    
+    -- Calcular informações de acesso
+    dias_restantes := calcular_dias_restantes_free(usuario_record.id);
+    tem_acesso := usuario_tem_acesso_ativo(usuario_record.id);
+    
+    -- Determinar o plano atual (priorizar FK sobre legado)
+    IF usuario_record.plano_id IS NOT NULL AND usuario_record.plano_nome IS NOT NULL THEN
+        -- Usar plano vinculado via FK
+        plano_atual := usuario_record.tipo_periodo;
+        plano_nome_atual := usuario_record.plano_nome;
+        plano_detalhes := jsonb_build_object(
+            'id', usuario_record.plano_id,
+            'nome', usuario_record.plano_nome,
+            'valor', COALESCE(usuario_record.valor, 0),
+            'recursos', COALESCE(usuario_record.recursos, '[]'::jsonb)
+        );
+    ELSE
+        -- Fallback para plano legado
+        plano_atual := COALESCE(usuario_record.plano_legado, 'free');
+        plano_nome_atual := CASE 
+            WHEN plano_atual = 'Premium' THEN 'Plano Premium'
+            WHEN plano_atual = 'free' THEN 'Plano Free'
+            ELSE plano_atual
+        END;
+        plano_detalhes := NULL;
+    END IF;
+    
+    -- Montar resposta
+    acesso_info := jsonb_build_object(
+        'hasAccess', tem_acesso,
+        'isAdmin', COALESCE(usuario_record.is_admin, false),
+        'plan', plano_atual,
+        'planName', plano_nome_atual,
+        'planDetails', plano_detalhes,
+        'daysRemaining', dias_restantes,
+        'needsUpgrade', (dias_restantes >= 0 AND dias_restantes <= 3 AND NOT COALESCE(usuario_record.is_admin, false)),
+        'isBlocked', (usuario_record.status != 'ativo' OR NOT tem_acesso),
+        'dataFinalPlano', usuario_record.data_final_plano,
+        'userId', usuario_record.id
+    );
+    
+    -- Atualizar último acesso
+    UPDATE public.usuarios 
+    SET data_ultimo_acesso = NOW()
+    WHERE id = usuario_record.id;
+    
+    RETURN acesso_info;
+END;
+$$;
+
+COMMENT ON FUNCTION verificar_meu_acesso IS 'Verifica acesso do usuário (principal ou dependente) ao sistema, retornando informações do plano e bloqueios';
 
 -- =====================================================
+-- 5. POLÍTICAS RLS (Row Level Security)
+-- =====================================================
 
+-- 5.1 Políticas RLS para categoria_trasacoes - Dependentes (NOVA - 10/01/2026)
+-- Permite que dependentes com permissões adequadas possam criar, editar e deletar categorias
+
+-- Política INSERT para dependentes (CORRIGIDA)
+CREATE POLICY "categorias_insert_dependentes" ON categoria_trasacoes
+FOR INSERT WITH CHECK (
+  usuario_id IN (
+    SELECT d.usuario_principal_id
+    FROM usuarios_dependentes d
+    WHERE d.auth_user_id = auth.uid() 
+      AND d.status = 'ativo'
+      AND (
+        (d.permissoes->>'pode_criar_transacoes')::boolean = true
+        OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+      )
+  )
+);
+
+-- Política UPDATE para dependentes (CORRIGIDA)
+CREATE POLICY "categorias_update_dependentes" ON categoria_trasacoes
+FOR UPDATE USING (
+  usuario_id IN (
+    SELECT d.usuario_principal_id
+    FROM usuarios_dependentes d
+    WHERE d.auth_user_id = auth.uid() 
+      AND d.status = 'ativo'
+      AND (
+        (d.permissoes->>'pode_criar_transacoes')::boolean = true
+        OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+      )
+  )
+)
+WITH CHECK (
+  usuario_id IN (
+    SELECT d.usuario_principal_id
+    FROM usuarios_dependentes d
+    WHERE d.auth_user_id = auth.uid() 
+      AND d.status = 'ativo'
+      AND (
+        (d.permissoes->>'pode_criar_transacoes')::boolean = true
+        OR (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+      )
+  )
+);
+
+-- Política DELETE para dependentes (apenas com permissão admin)
+CREATE POLICY "categorias_delete_dependentes" ON categoria_trasacoes
+FOR DELETE USING (
+  usuario_id IN (
+    SELECT d.usuario_principal_id
+    FROM usuarios_dependentes d
+    WHERE d.auth_user_id = auth.uid() 
+      AND d.status = 'ativo'
+      AND (d.permissoes->>'pode_ver_dados_admin')::boolean = true
+  )
+);
+
+-- =====================================================
+-- 6. CORREÇÕES DE MIGRAÇÃO
+-- =====================================================
+
+-- 6.1 Correção: Categorias com tipo NULL (Migração de Bancos Antigos)
+-- Atualizar categorias antigas que não têm tipo definido
+UPDATE categoria_trasacoes
+SET tipo = 'ambos'
+WHERE tipo IS NULL;

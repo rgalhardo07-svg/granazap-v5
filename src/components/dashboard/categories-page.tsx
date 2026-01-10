@@ -18,9 +18,9 @@ export function CategoriesPage() {
   const { filter: accountFilter } = useAccountFilter();
   const { categories: allCategories, loading } = useCategoriesQuery();
   
-  // Filtrar categorias por tipo
-  const incomeCategories = allCategories.filter(c => c.tipo === 'entrada');
-  const expenseCategories = allCategories.filter(c => c.tipo === 'saida');
+  // Filtrar categorias por tipo (incluindo 'ambos')
+  const incomeCategories = allCategories.filter(c => c.tipo === 'entrada' || c.tipo === 'ambos');
+  const expenseCategories = allCategories.filter(c => c.tipo === 'saida' || c.tipo === 'ambos');
   const loadingIncome = loading;
   const loadingExpense = loading;
   
