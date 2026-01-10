@@ -981,6 +981,63 @@ BEGIN
 END;
 $$;
 
+-- 4.12.1 Função: admin_update_plan
+CREATE OR REPLACE FUNCTION admin_update_plan(
+    p_plan_id INTEGER,
+    p_nome VARCHAR DEFAULT NULL,
+    p_tipo_periodo VARCHAR DEFAULT NULL,
+    p_valor NUMERIC DEFAULT NULL,
+    p_link_checkout TEXT DEFAULT NULL,
+    p_descricao TEXT DEFAULT NULL,
+    p_recursos TEXT DEFAULT NULL,
+    p_ativo BOOLEAN DEFAULT NULL,
+    p_ordem_exibicao INTEGER DEFAULT NULL,
+    p_permite_compartilhamento BOOLEAN DEFAULT NULL,
+    p_max_usuarios_dependentes INTEGER DEFAULT NULL,
+    p_destaque BOOLEAN DEFAULT NULL,
+    p_permite_modo_pj BOOLEAN DEFAULT NULL
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_is_admin BOOLEAN;
+  v_user_id UUID;
+BEGIN
+  v_user_id := auth.uid();
+  
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Usuário não autenticado';
+  END IF;
+  
+  SELECT u.is_admin INTO v_is_admin
+  FROM usuarios u
+  WHERE u.auth_user = v_user_id;
+  
+  IF v_is_admin IS NULL OR v_is_admin = false THEN
+    RAISE EXCEPTION 'Acesso negado. Apenas administradores.';
+  END IF;
+  
+  UPDATE planos_sistema
+  SET
+    nome = COALESCE(p_nome, nome),
+    tipo_periodo = COALESCE(p_tipo_periodo, tipo_periodo),
+    valor = COALESCE(p_valor, valor),
+    link_checkout = COALESCE(p_link_checkout, link_checkout),
+    descricao = COALESCE(p_descricao, descricao),
+    recursos = CASE WHEN p_recursos IS NOT NULL THEN p_recursos::jsonb ELSE recursos END,
+    ativo = COALESCE(p_ativo, ativo),
+    ordem_exibicao = COALESCE(p_ordem_exibicao, ordem_exibicao),
+    permite_compartilhamento = COALESCE(p_permite_compartilhamento, permite_compartilhamento),
+    max_usuarios_dependentes = COALESCE(p_max_usuarios_dependentes, max_usuarios_dependentes),
+    destaque = COALESCE(p_destaque, destaque),
+    permite_modo_pj = COALESCE(p_permite_modo_pj, permite_modo_pj),
+    updated_at = NOW()
+  WHERE id = p_plan_id;
+END;
+$$;
+
 -- 4.13 Função: admin_delete_user
 CREATE OR REPLACE FUNCTION admin_delete_user(
     p_user_id integer, 
@@ -1502,7 +1559,7 @@ $$;
 CREATE OR REPLACE FUNCTION get_system_settings()
 RETURNS TABLE(
     app_name text, app_logo_url text, primary_color text, secondary_color text, support_email text, 
-    habilitar_modo_pj boolean, bloquear_cadastro_novos_usuarios boolean, show_sidebar_logo boolean, 
+    habilitar_modo_pj boolean, restringir_cadastro_usuarios_existentes boolean, show_sidebar_logo boolean, 
     show_sidebar_name boolean, show_login_logo boolean, show_login_name boolean, 
     logo_url_sidebar text, logo_url_login text, favicon_url text
 )
@@ -1514,7 +1571,7 @@ BEGIN
   SELECT company_name::TEXT as app_name, logo_url::TEXT as app_logo_url,
     configuracoes_sistema.primary_color::TEXT, configuracoes_sistema.secondary_color::TEXT,
     configuracoes_sistema.support_email::TEXT, configuracoes_sistema.habilitar_modo_pj,
-    configuracoes_sistema.bloquear_cadastro_novos_usuarios, configuracoes_sistema.show_sidebar_logo,
+    configuracoes_sistema.restringir_cadastro_usuarios_existentes, configuracoes_sistema.show_sidebar_logo,
     configuracoes_sistema.show_sidebar_name, configuracoes_sistema.show_login_logo,
     configuracoes_sistema.show_login_name, configuracoes_sistema.logo_url_sidebar::TEXT,
     configuracoes_sistema.logo_url_login::TEXT, configuracoes_sistema.favicon_url::TEXT
