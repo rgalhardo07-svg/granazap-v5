@@ -34,10 +34,23 @@ export async function signupUser(data: SignupData): Promise<SignupResult> {
       .single();
 
     if (config?.restringir_cadastro_usuarios_existentes === true) {
-      return {
-        success: false,
-        error: 'CADASTRO_BLOQUEADO' // Código especial para o modal
-      };
+      // Verificar se o email existe em usuarios_dependentes com convite pendente
+      const { data: dependente } = await supabase
+        .from('usuarios_dependentes')
+        .select('id, email, convite_status')
+        .eq('email', data.email.toLowerCase())
+        .eq('convite_status', 'pendente')
+        .maybeSingle();
+
+      // Se não é dependente com convite pendente, bloquear cadastro
+      if (!dependente) {
+        return {
+          success: false,
+          error: 'CADASTRO_BLOQUEADO' // Código especial para o modal
+        };
+      }
+      
+      // Se é dependente, permitir continuar o cadastro
     }
 
     // Validações básicas

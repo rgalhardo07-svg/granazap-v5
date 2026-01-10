@@ -571,6 +571,9 @@ END;
 $$;
 
 -- 4.6 Função: prevent_duplicate_user_on_signup
+-- NOTA: A função principal link_existing_user_on_signup está no setup.sql
+-- Esta função é um complemento para evitar duplicação de usuários
+-- A lógica completa de dependentes está implementada no setup.sql
 CREATE OR REPLACE FUNCTION prevent_duplicate_user_on_signup()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -599,6 +602,7 @@ END;
 $$;
 
 -- 4.7 Função: handle_public_user_invite_link
+-- Vincula auth_user_id em usuarios_dependentes quando um usuário é criado
 CREATE OR REPLACE FUNCTION handle_public_user_invite_link()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -606,8 +610,16 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    -- Lógica para processar convites de dependentes
-    -- (implementação específica conforme necessidade)
+    -- Atualizar usuarios_dependentes se houver convite pendente com este email
+    UPDATE public.usuarios_dependentes
+    SET 
+        auth_user_id = NEW.auth_user,
+        convite_status = 'aceito',
+        data_ultima_modificacao = NOW()
+    WHERE 
+        LOWER(email) = LOWER(NEW.email)
+        AND convite_status = 'pendente';
+    
     RETURN NEW;
 END;
 $$;
