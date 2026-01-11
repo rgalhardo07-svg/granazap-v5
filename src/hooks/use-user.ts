@@ -18,6 +18,7 @@ export interface UserProfile {
   is_dependente?: boolean; // Indica se é usuário dependente
   usuario_principal_id?: number; // ID do usuário principal (se for dependente)
   dependente_id?: number; // ID na tabela usuarios_dependentes (se for dependente)
+  tipos_conta_permitidos?: string[]; // Tipos de conta que dependente pode acessar (pessoal, pj)
   max_usuarios_dependentes?: number; // Limite de dependentes do plano
   permite_compartilhamento?: boolean; // Se o plano permite compartilhamento
   [key: string]: any; // Permitir outras colunas do banco
@@ -78,7 +79,7 @@ export function useUser() {
       // 3. Se não encontrou, verificar se é usuário dependente
       const { data: dependenteData, error: dependenteError } = await supabase
         .from('usuarios_dependentes')
-        .select('id, nome, email, telefone, usuario_principal_id, status')
+        .select('id, nome, email, telefone, usuario_principal_id, status, permissoes')
         .eq('auth_user_id', authUser.id)
         .eq('status', 'ativo')
         .single();
@@ -104,6 +105,8 @@ export function useUser() {
           ? principalData.planos_sistema[0] 
           : principalData?.planos_sistema;
 
+        const tiposContaPermitidos = (dependenteData.permissoes as any)?.tipos_conta_permitidos || ['pessoal', 'pj'];
+
         const finalProfile = {
           user: authUser,
           profile: {
@@ -118,6 +121,7 @@ export function useUser() {
             is_dependente: true,
             usuario_principal_id: dependenteData.usuario_principal_id,
             dependente_id: dependenteData.id,
+            tipos_conta_permitidos: tiposContaPermitidos,
             max_usuarios_dependentes: planosData?.max_usuarios_dependentes || 0,
             permite_compartilhamento: planosData?.permite_compartilhamento || false
           } as UserProfile
@@ -149,8 +153,8 @@ export function useUser() {
       }
       return undefined;
     },
-    staleTime: 1000 * 60 * 60, // 1 hora de cache (perfil muda pouco)
-    gcTime: 1000 * 60 * 60 * 24, // 24 horas em cache
+    staleTime: 1000 * 60 * 5, // 5 minutos de cache (reduzido para atualizar permissões mais rápido)
+    gcTime: 1000 * 60 * 30, // 30 minutos em cache
     retry: 1,
   });
 

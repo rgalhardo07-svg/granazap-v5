@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import { Shield, Eye, EyeOff, Edit, Trash, FileText, CreditCard, Wallet, UserPlus } from "lucide-react";
+import { Shield, Eye, EyeOff, Edit, Trash, FileText, CreditCard, Wallet, UserPlus, Building2, User } from "lucide-react";
 import type { TeamMember } from "@/hooks/use-team-members";
 
 interface EditMemberModalProps {
@@ -24,6 +24,7 @@ interface Permissoes {
   pode_gerenciar_cartoes: boolean;
   pode_convidar_membros: boolean;
   nivel_acesso: 'basico' | 'intermediario' | 'avancado';
+  tipos_conta_permitidos: string[];
 }
 
 const permissoesDefault: Permissoes = {
@@ -36,7 +37,8 @@ const permissoesDefault: Permissoes = {
   pode_gerenciar_contas: false,
   pode_gerenciar_cartoes: false,
   pode_convidar_membros: false,
-  nivel_acesso: 'basico'
+  nivel_acesso: 'basico',
+  tipos_conta_permitidos: ['pessoal', 'pj']
 };
 
 export function EditMemberModal({ isOpen, onClose, member, onSave }: EditMemberModalProps) {
@@ -46,7 +48,10 @@ export function EditMemberModal({ isOpen, onClose, member, onSave }: EditMemberM
   // Atualizar permissões quando o membro mudar
   useEffect(() => {
     if (member?.permissoes) {
-      setPermissoes(member.permissoes);
+      setPermissoes({
+        ...member.permissoes,
+        tipos_conta_permitidos: member.permissoes.tipos_conta_permitidos || ['pessoal', 'pj']
+      });
     } else {
       setPermissoes(permissoesDefault);
     }
@@ -81,11 +86,30 @@ export function EditMemberModal({ isOpen, onClose, member, onSave }: EditMemberM
   };
 
   const togglePermissao = (key: keyof Permissoes) => {
-    if (key === 'nivel_acesso') return; // Não toggle, usa select
+    if (key === 'nivel_acesso' || key === 'tipos_conta_permitidos') return; // Não toggle, usa select
     setPermissoes(prev => ({
       ...prev,
       [key]: !prev[key]
     }));
+  };
+
+  const toggleTipoConta = (tipo: 'pessoal' | 'pj') => {
+    setPermissoes(prev => {
+      const tipos = prev.tipos_conta_permitidos || ['pessoal', 'pj'];
+      const hasType = tipos.includes(tipo);
+      
+      // Não permitir desmarcar ambos
+      if (hasType && tipos.length === 1) {
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        tipos_conta_permitidos: hasType
+          ? tipos.filter(t => t !== tipo)
+          : [...tipos, tipo]
+      };
+    });
   };
 
   const setNivelAcesso = (nivel: 'basico' | 'intermediario' | 'avancado') => {
@@ -93,7 +117,8 @@ export function EditMemberModal({ isOpen, onClose, member, onSave }: EditMemberM
     const presets = {
       basico: {
         ...permissoesDefault,
-        nivel_acesso: 'basico' as const
+        nivel_acesso: 'basico' as const,
+        tipos_conta_permitidos: ['pessoal', 'pj']
       },
       intermediario: {
         pode_ver_dados_admin: true,
@@ -105,7 +130,8 @@ export function EditMemberModal({ isOpen, onClose, member, onSave }: EditMemberM
         pode_gerenciar_contas: false,
         pode_gerenciar_cartoes: false,
         pode_convidar_membros: false,
-        nivel_acesso: 'intermediario' as const
+        nivel_acesso: 'intermediario' as const,
+        tipos_conta_permitidos: ['pessoal', 'pj']
       },
       avancado: {
         pode_ver_dados_admin: true,
@@ -117,7 +143,8 @@ export function EditMemberModal({ isOpen, onClose, member, onSave }: EditMemberM
         pode_gerenciar_contas: true,
         pode_gerenciar_cartoes: true,
         pode_convidar_membros: false, // Sempre bloqueado
-        nivel_acesso: 'avancado' as const
+        nivel_acesso: 'avancado' as const,
+        tipos_conta_permitidos: ['pessoal', 'pj']
       }
     };
     setPermissoes(presets[nivel]);
@@ -133,6 +160,46 @@ export function EditMemberModal({ isOpen, onClose, member, onSave }: EditMemberM
       className="max-w-2xl"
     >
       <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+        {/* Tipos de Conta Permitidos */}
+        <div>
+          <label className="block text-sm font-medium text-white mb-3">
+            Acesso às Contas
+          </label>
+          <div className="text-xs text-zinc-400 mb-3">
+            Defina quais tipos de conta este membro pode acessar
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => toggleTipoConta('pessoal')}
+              className={`p-4 rounded-lg border-2 transition-colors ${
+                (permissoes.tipos_conta_permitidos || []).includes('pessoal')
+                  ? 'border-blue-500 bg-blue-500/10'
+                  : 'border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center gap-2 justify-center">
+                <User className="w-4 h-4" />
+                <span className="text-sm font-medium text-white">Conta Pessoal</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleTipoConta('pj')}
+              className={`p-4 rounded-lg border-2 transition-colors ${
+                (permissoes.tipos_conta_permitidos || []).includes('pj')
+                  ? 'border-blue-500 bg-blue-500/10'
+                  : 'border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center gap-2 justify-center">
+                <Building2 className="w-4 h-4" />
+                <span className="text-sm font-medium text-white">Conta PJ</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* Nível de Acesso Rápido */}
         <div>
           <label className="block text-sm font-medium text-white mb-3">

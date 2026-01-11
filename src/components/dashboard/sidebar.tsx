@@ -98,6 +98,14 @@ export function DashboardSidebar() {
     changeFilter(type);
   };
 
+  // Verificar quais tipos de conta o usuário pode acessar
+  const tiposContaPermitidos = profile?.is_dependente 
+    ? (profile?.tipos_conta_permitidos || ['pessoal', 'pj'])
+    : ['pessoal', 'pj'];
+  
+  const podeVerPessoal = tiposContaPermitidos.includes('pessoal');
+  const podeVerPJ = tiposContaPermitidos.includes('pj');
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -154,31 +162,35 @@ export function DashboardSidebar() {
       </div>
 
       {/* Account Filter Toggle */}
-      {!collapsed && permiteModoPJ && (
+      {!collapsed && permiteModoPJ && (podeVerPessoal || podeVerPJ) && (
         <div className="p-4">
           <div className="flex gap-2 p-1 bg-[#0A0F1C] rounded-lg">
-            <button
-              onClick={() => handleAccountFilterChange("pessoal")}
-              className={cn(
-                "flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all",
-                accountFilter === "pessoal"
-                  ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
-                  : "text-zinc-400 hover:text-white hover:bg-white/5"
-              )}
-            >
-              👤 {t('sidebar.personal')}
-            </button>
-            <button
-              onClick={() => handleAccountFilterChange("pj")}
-              className={cn(
-                "flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all",
-                accountFilter === "pj"
-                  ? "bg-purple-500 text-white shadow-lg shadow-purple-500/20"
-                  : "text-zinc-400 hover:text-white hover:bg-white/5"
-              )}
-            >
-              🏢 {t('sidebar.pj')}
-            </button>
+            {podeVerPessoal && (
+              <button
+                onClick={() => handleAccountFilterChange("pessoal")}
+                className={cn(
+                  "flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all",
+                  accountFilter === "pessoal"
+                    ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+                    : "text-zinc-400 hover:text-white hover:bg-white/5"
+                )}
+              >
+                👤 {t('sidebar.personal')}
+              </button>
+            )}
+            {podeVerPJ && (
+              <button
+                onClick={() => handleAccountFilterChange("pj")}
+                className={cn(
+                  "flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all",
+                  accountFilter === "pj"
+                    ? "bg-purple-500 text-white shadow-lg shadow-purple-500/20"
+                    : "text-zinc-400 hover:text-white hover:bg-white/5"
+                )}
+              >
+                🏢 {t('sidebar.pj')}
+              </button>
+            )}
           </div>
         </div>
       )}

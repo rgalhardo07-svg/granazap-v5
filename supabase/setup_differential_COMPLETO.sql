@@ -658,30 +658,56 @@ $$;
 
 COMMENT ON FUNCTION verificar_proprietario_por_auth() IS 'Retorna o ID do usuário principal. Se for dependente, retorna o ID do titular. Usado nas políticas RLS para permitir acesso compartilhado.';
 
--- 4.8 Função: sync_user_id_from_auth (NOVA - 22/12/2024)
+-- 4.8 Função: sync_user_id_from_auth (ATUALIZADA - 10/01/2026)
+-- Suporta tanto usuários principais quanto dependentes
 CREATE OR REPLACE FUNCTION sync_user_id_from_auth()
 RETURNS TRIGGER AS $$
+DECLARE
+  v_principal_auth_user UUID;
 BEGIN
   -- Se user_id já está preenchido, não faz nada
   IF NEW.user_id IS NOT NULL THEN
     RETURN NEW;
   END IF;
 
-  -- Busca o user_id (INTEGER) baseado no usuario_id (UUID)
+  -- Primeiro, tentar buscar o user_id (INTEGER) baseado no usuario_id (UUID) na tabela usuarios
   SELECT id INTO NEW.user_id
   FROM usuarios
   WHERE auth_user = NEW.usuario_id;
   
-  -- Se não encontrou, lança erro
-  IF NEW.user_id IS NULL THEN
-    RAISE EXCEPTION 'Usuário não encontrado na tabela usuarios para auth_user: %', NEW.usuario_id;
+  -- Se encontrou, retornar (usuário principal)
+  IF NEW.user_id IS NOT NULL THEN
+    RETURN NEW;
   END IF;
+  
+  -- Se não encontrou, verificar se é um dependente
+  -- Buscar o auth_user do principal baseado no auth_user_id do dependente
+  SELECT u.auth_user INTO v_principal_auth_user
+  FROM usuarios_dependentes d
+  JOIN usuarios u ON u.id = d.usuario_principal_id
+  WHERE d.auth_user_id = NEW.usuario_id
+    AND d.status = 'ativo';
+  
+  -- Se encontrou dependente, buscar user_id do principal
+  IF v_principal_auth_user IS NOT NULL THEN
+    SELECT id INTO NEW.user_id
+    FROM usuarios
+    WHERE auth_user = v_principal_auth_user;
+    
+    -- Se encontrou o principal, retornar
+    IF NEW.user_id IS NOT NULL THEN
+      RETURN NEW;
+    END IF;
+  END IF;
+  
+  -- Se não encontrou nem como principal nem como dependente, lançar erro
+  RAISE EXCEPTION 'Usuário não encontrado na tabela usuarios para auth_user: %', NEW.usuario_id;
   
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION sync_user_id_from_auth() IS 'Preenche automaticamente user_id (INTEGER) baseado em usuario_id (UUID) nas tabelas de contas, cartões e investimentos';
+COMMENT ON FUNCTION sync_user_id_from_auth() IS 'Preenche automaticamente user_id (INTEGER) baseado em usuario_id (UUID). Suporta tanto usuários principais quanto dependentes.';
 
 -- 4.9 Função: auto_set_plano_id (NOVA - 22/12/2024)
 CREATE OR REPLACE FUNCTION auto_set_plano_id()
@@ -2966,6 +2992,29 @@ COMMENT ON FUNCTION verificar_meu_acesso IS 'Verifica acesso do usuário (princi
 -- 5.1 Políticas RLS para categoria_trasacoes - Dependentes (NOVA - 10/01/2026)
 -- Permite que dependentes com permissões adequadas possam criar, editar e deletar categorias
 
+-- Política SELECT para dependentes (ROBUSTA - 10/01/2026)
+-- Esta policy funciona independente do ID usado no frontend
+-- Garante que dependente vê categorias do principal mesmo se frontend usar ID errado
+CREATE POLICY "dependentes_veem_categorias_sempre" ON categoria_trasacoes
+FOR SELECT USING (
+  -- Caso 1: Usuário principal vê suas próprias categorias
+  usuario_id IN (
+    SELECT id 
+    FROM usuarios 
+    WHERE auth_user = auth.uid()
+  )
+  OR
+  -- Caso 2: Dependente vê categorias do principal
+  -- INDEPENDENTE do usuario_id usado na query
+  EXISTS (
+    SELECT 1
+    FROM usuarios_dependentes d
+    WHERE d.auth_user_id = auth.uid()
+      AND d.status = 'ativo'
+      AND d.usuario_principal_id = categoria_trasacoes.usuario_id
+  )
+);
+
 -- Política INSERT para dependentes (CORRIGIDA)
 CREATE POLICY "categorias_insert_dependentes" ON categoria_trasacoes
 FOR INSERT WITH CHECK (
@@ -3029,3 +3078,166 @@ FOR DELETE USING (
 UPDATE categoria_trasacoes
 SET tipo = 'ambos'
 WHERE tipo IS NULL;
+
+-- =====================================================
+-- 7. CONTROLE GRANULAR DE ACESSO PESSOAL/PJ PARA DEPENDENTES (10/01/2026)
+-- =====================================================
+-- Permite que o principal defina se dependente acessa Pessoal, PJ ou ambos
+-- Implementação 100% retrocompatível - não quebra nada existente
+
+-- 7.1 Adicionar campo tipos_conta_permitidos aos dependentes existentes
+UPDATE usuarios_dependentes
+SET permissoes = permissoes || '{"tipos_conta_permitidos": ["pessoal", "pj"]}'::jsonb
+WHERE NOT (permissoes ? 'tipos_conta_permitidos');
+
+-- 7.2 Criar função helper para verificar acesso por tipo_conta
+CREATE OR REPLACE FUNCTION dependente_tem_acesso_tipo_conta(
+  p_tipo_conta text
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_tipos_permitidos jsonb;
+BEGIN
+  SELECT permissoes->'tipos_conta_permitidos'
+  INTO v_tipos_permitidos
+  FROM usuarios_dependentes
+  WHERE auth_user_id = auth.uid()
+    AND status = 'ativo';
+  
+  IF v_tipos_permitidos IS NULL THEN
+    RETURN false;
+  END IF;
+  
+  RETURN v_tipos_permitidos @> to_jsonb(p_tipo_conta);
+END;
+$$;
+
+COMMENT ON FUNCTION dependente_tem_acesso_tipo_conta IS 'Verifica se dependente logado tem acesso ao tipo_conta especificado (pessoal ou pj)';
+
+-- 7.3 Criar NOVAS policies com filtro de tipo_conta
+
+-- 7.3.1 TRANSACOES
+DROP POLICY IF EXISTS "dependentes_veem_transacoes_tipo_conta_permitido" ON transacoes;
+CREATE POLICY "dependentes_veem_transacoes_tipo_conta_permitido"
+ON transacoes FOR SELECT
+USING (
+  usuario_id IN (
+    SELECT usuario_principal_id 
+    FROM usuarios_dependentes d
+    WHERE d.auth_user_id = auth.uid()
+      AND d.status = 'ativo'
+      AND (
+        (d.permissoes->'tipos_conta_permitidos')::jsonb @> to_jsonb(transacoes.tipo_conta)
+        AND (
+          ((d.permissoes->>'pode_ver_dados_admin')::boolean = true)
+          OR transacoes.dependente_id = d.id
+        )
+      )
+  )
+);
+
+-- 7.3.2 LANCAMENTOS_FUTUROS
+DROP POLICY IF EXISTS "dependentes_veem_lancamentos_tipo_conta_permitido" ON lancamentos_futuros;
+CREATE POLICY "dependentes_veem_lancamentos_tipo_conta_permitido"
+ON lancamentos_futuros FOR SELECT
+USING (
+  usuario_id IN (
+    SELECT usuario_principal_id 
+    FROM usuarios_dependentes d
+    WHERE d.auth_user_id = auth.uid()
+      AND d.status = 'ativo'
+      AND (
+        (d.permissoes->'tipos_conta_permitidos')::jsonb @> to_jsonb(lancamentos_futuros.tipo_conta)
+        AND (
+          ((d.permissoes->>'pode_ver_dados_admin')::boolean = true)
+          OR lancamentos_futuros.dependente_id = d.id
+        )
+      )
+  )
+);
+
+-- 7.3.3 CATEGORIA_TRASACOES
+DROP POLICY IF EXISTS "dependentes_veem_categorias_tipo_conta_permitido" ON categoria_trasacoes;
+CREATE POLICY "dependentes_veem_categorias_tipo_conta_permitido"
+ON categoria_trasacoes FOR SELECT
+USING (
+  usuario_id IN (
+    SELECT usuario_principal_id 
+    FROM usuarios_dependentes d
+    WHERE d.auth_user_id = auth.uid()
+      AND d.status = 'ativo'
+      AND (d.permissoes->'tipos_conta_permitidos')::jsonb @> to_jsonb(categoria_trasacoes.tipo_conta)
+  )
+);
+
+-- 7.3.4 CONTAS_BANCARIAS
+DROP POLICY IF EXISTS "dependentes_veem_contas_tipo_conta_permitido" ON contas_bancarias;
+CREATE POLICY "dependentes_veem_contas_tipo_conta_permitido"
+ON contas_bancarias FOR SELECT
+USING (
+  usuario_id IN (
+    SELECT u.auth_user
+    FROM usuarios u
+    JOIN usuarios_dependentes d ON d.usuario_principal_id = u.id
+    WHERE d.auth_user_id = auth.uid()
+      AND d.status = 'ativo'
+      AND (
+        (d.permissoes->'tipos_conta_permitidos')::jsonb @> to_jsonb(contas_bancarias.tipo_conta)
+        AND (
+          ((d.permissoes->>'pode_gerenciar_contas')::boolean = true)
+          OR ((d.permissoes->>'pode_ver_dados_admin')::boolean = true)
+        )
+      )
+  )
+);
+
+-- 7.3.5 CARTOES_CREDITO
+DROP POLICY IF EXISTS "dependentes_veem_cartoes_tipo_conta_permitido" ON cartoes_credito;
+CREATE POLICY "dependentes_veem_cartoes_tipo_conta_permitido"
+ON cartoes_credito FOR SELECT
+USING (
+  usuario_id IN (
+    SELECT u.auth_user
+    FROM usuarios u
+    JOIN usuarios_dependentes d ON d.usuario_principal_id = u.id
+    WHERE d.auth_user_id = auth.uid()
+      AND d.status = 'ativo'
+      AND (
+        (d.permissoes->'tipos_conta_permitidos')::jsonb @> to_jsonb(cartoes_credito.tipo_conta)
+        AND (
+          ((d.permissoes->>'pode_gerenciar_cartoes')::boolean = true)
+          OR ((d.permissoes->>'pode_ver_dados_admin')::boolean = true)
+        )
+      )
+  )
+);
+
+-- 7.4 Atualizar default do campo permissoes
+ALTER TABLE usuarios_dependentes 
+ALTER COLUMN permissoes 
+SET DEFAULT '{
+  "nivel_acesso": "basico",
+  "tipos_conta_permitidos": ["pessoal", "pj"],
+  "pode_ver_relatorios": true,
+  "pode_ver_dados_admin": true,
+  "pode_convidar_membros": false,
+  "pode_criar_transacoes": true,
+  "pode_gerenciar_contas": false,
+  "pode_editar_transacoes": true,
+  "pode_gerenciar_cartoes": false,
+  "pode_deletar_transacoes": false,
+  "pode_ver_outros_membros": false
+}'::jsonb;
+
+-- =====================================================
+-- RESULTADO ESPERADO:
+-- ✅ Dependentes existentes mantêm acesso total (["pessoal", "pj"])
+-- ✅ Novas policies filtram por tipo_conta
+-- ✅ Policies antigas continuam funcionando (não foram removidas)
+-- ✅ Principal pode editar tipos_conta_permitidos via frontend
+-- ✅ Nada quebra - implementação 100% retrocompatível
+-- =====================================================

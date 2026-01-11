@@ -22,6 +22,7 @@ export interface TeamMember {
     pode_gerenciar_cartoes: boolean;
     pode_convidar_membros: boolean;
     nivel_acesso: 'basico' | 'intermediario' | 'avancado';
+    tipos_conta_permitidos?: string[];
   };
 }
 
